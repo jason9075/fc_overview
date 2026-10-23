@@ -35,29 +35,32 @@ async function main() {
   // Wait for 3D render to stabilize
   await page.waitForTimeout(1500);
 
-  // 1. Initial overview
+  // 1. Initial overview (Procedural PCB Mode)
   console.log('Taking screenshot: 01_overview.png ...');
   await page.screenshot({ path: path.join(outDir, '01_overview.png') });
 
-  // 2. Click "正面"
-  console.log('Clicking 正面 view...');
+  // 2. Click "正面" (Procedural Mode)
+  console.log('Clicking 正面 view (Procedural Mode)...');
   await page.click('#btn-view-top');
   await page.waitForTimeout(1000);
   console.log('Taking screenshot: 02_top_view.png ...');
   await page.screenshot({ path: path.join(outDir, '02_top_view.png') });
 
-  // 3. Switch to vector artwork texture
-  console.log('Toggling texture mode to Artwork...');
+  // Switch to photographic texture
+  console.log('Toggling texture mode to Photo...');
   await page.click('#btn-toggle-texture');
   await page.waitForTimeout(800);
-  console.log('Taking screenshot: 03_artwork_mode.png ...');
+  console.log('Taking screenshot: 02b_top_photo.png ...');
+  await page.screenshot({ path: path.join(outDir, '02b_top_photo.png') });
+
+  // Switch back to procedural mode
+  console.log('Toggling texture mode back to Procedural...');
+  await page.click('#btn-toggle-texture');
+  await page.waitForTimeout(800);
+  console.log('Taking screenshot: 03_artwork_mode.png (Procedural Mode) ...');
   await page.screenshot({ path: path.join(outDir, '03_artwork_mode.png') });
 
-  // Switch back to photo texture
-  await page.click('#btn-toggle-texture');
-  await page.waitForTimeout(600);
-
-  // 4. Open drawer and select MCU
+  // 3. Open drawer and select MCU
   console.log('Opening drawer and selecting MCU...');
   await page.click('#btn-toggle-list');
   await page.waitForTimeout(400);
@@ -70,14 +73,25 @@ async function main() {
   await page.click('#btn-close-drawer');
   await page.waitForTimeout(400);
 
-  // 5. Click "背面"
-  console.log('Clicking 背面 view...');
+  // 4. Click "背面" (Procedural Mode)
+  console.log('Clicking 背面 view (Procedural Mode)...');
   await page.click('#btn-view-bottom');
   await page.waitForTimeout(1000);
   console.log('Taking screenshot: 05_bottom_view.png ...');
   await page.screenshot({ path: path.join(outDir, '05_bottom_view.png') });
 
-  // 6. Select AT7456E OSD
+  // Switch to photographic texture for bottom
+  console.log('Toggling texture mode to Photo (Bottom)...');
+  await page.click('#btn-toggle-texture');
+  await page.waitForTimeout(800);
+  console.log('Taking screenshot: 05b_bottom_photo.png ...');
+  await page.screenshot({ path: path.join(outDir, '05b_bottom_photo.png') });
+
+  // Switch back to procedural
+  await page.click('#btn-toggle-texture');
+  await page.waitForTimeout(600);
+
+  // 5. Select AT7456E OSD
   await page.click('#btn-toggle-list');
   await page.waitForTimeout(400);
   await page.click('.drawer-item[data-id="osd"]');
@@ -87,6 +101,17 @@ async function main() {
 
   // Close drawer before tutorial
   await page.click('#btn-close-drawer');
+  await page.waitForTimeout(400);
+
+  // 6. Open Comparison Modal (3-Way Comparison)
+  console.log('Opening comparison modal...');
+  await page.click('#btn-open-comparison');
+  await page.waitForTimeout(800);
+  console.log('Taking screenshot: 10_comparison_modal.png ...');
+  await page.screenshot({ path: path.join(outDir, '10_comparison_modal.png') });
+
+  // Close comparison modal
+  await page.click('#btn-close-comparison');
   await page.waitForTimeout(400);
 
   // 7. Click "互動教學"

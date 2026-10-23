@@ -5,10 +5,13 @@ Asset extraction pipeline for the Matrix 1S 5IN1 II explorer.
 Inputs : public/references/*.jpg (official BETAFPV product photos, see SOURCE.md)
 Outputs:
   public/assets/top_photo.jpg / bottom_photo.jpg   rectified face textures (board-local X/Z frame)
-  public/assets/top_artwork.png / bottom_artwork.png reconstructed (non-photographic) artwork
   src/data/generated/outline.json                  board outline (mm) + hole estimates
   src/data/generated/passives.json                 MLCC-like passives detected on each face
   tools/debug/*.png                                 overlays for visual verification
+Note:
+  Procedural PCB rendering is physically reconstructed in src/scene/proceduralPCB.ts
+  from component placements, footprints, and verified silkscreen, completely eliminating
+  HSV-based color thresholding from the production pipeline.
 
 Coordinate convention (see guideline §5):
   1 unit = 1 mm, board centre at origin, X = right, Z = backward (FORWARD = -Z).
@@ -162,22 +165,6 @@ def detect_passives(rect, outline_mask, side):
     return found
 
 
-def make_artwork(rect, mask, side):
-    """Non-photographic reconstruction: solder mask + gold copper + white silkscreen."""
-    hsv = cv2.cvtColor(rect, cv2.COLOR_BGR2HSV)
-    h, s, v = hsv[..., 0].astype(int), hsv[..., 1].astype(int), hsv[..., 2].astype(int)
-    gold = (h >= 8) & (h <= 28) & (s >= 70) & (v >= 120)
-    silk = (s < 45) & (v > 185)
-    art = np.zeros_like(rect)
-    art[:] = (34, 30, 28)  # BGR solder mask
-    noise = cv2.GaussianBlur(np.random.default_rng(1).normal(0, 6, rect.shape[:2]).astype(np.float32), (0, 0), 3)
-    art = np.clip(art.astype(np.float32) + noise[..., None], 0, 255).astype(np.uint8)
-    art[silk] = (228, 232, 236)
-    art[gold] = (80, 168, 214)
-    art[mask <= 0] = (255, 255, 255)
-    return art
-
-
 def main():
     sources = {
         'top': [('solderfree_front.jpg', False), ('unsoldered_front.jpg', False)],
@@ -228,8 +215,6 @@ def main():
         out = rect.copy()
         out[filled == 0] = (255, 255, 255)
         cv2.imwrite(os.path.join(ASSETS, f'{side}_photo.jpg'), out, [cv2.IMWRITE_JPEG_QUALITY, 88])
-        art = make_artwork(rect, filled, side)
-        cv2.imwrite(os.path.join(ASSETS, f'{side}_artwork.png'), art)
         pas = detect_passives(rect, filled, side)
         passives[side] = pas
         dbg = out.copy()

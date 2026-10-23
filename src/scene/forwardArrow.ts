@@ -83,6 +83,14 @@ export class ForwardArrow {
     this.textMesh.position.set(0, 0.5, 2.8);
     this.group.add(this.textMesh);
 
+    // Bottom face label (readable when looking from below)
+    const labelGeoBot = new THREE.PlaneGeometry(8, 2);
+    labelGeoBot.rotateX(Math.PI / 2);
+    labelGeoBot.rotateY(Math.PI);
+    const textMeshBot = new THREE.Mesh(labelGeoBot, labelMat);
+    textMeshBot.position.set(0, -0.5, 2.8);
+    this.group.add(textMeshBot);
+
     // Position whole group at forwardAnnotation coordinates
     this.group.position.set(forwardAnnotation.xMm, 0.2, forwardAnnotation.zMm);
 

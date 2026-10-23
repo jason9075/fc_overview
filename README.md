@@ -17,12 +17,13 @@ The 3D model and interactive features have been automatically validated using he
 
 | View / Feature | Preview & Visual Evidence |
 | :--- | :--- |
-| **Top Face vs. Official Diagram** | ![Top Face Comparison](tools/screenshots/10_comparison_top.png) |
-| **Bottom Face vs. Official Diagram** | ![Bottom Face Comparison](tools/screenshots/11_comparison_bottom.png) |
-| **Perspective Overview** | ![Perspective Overview](tools/screenshots/01_overview.png) |
+| **Top Face 3-Way Comparison** (Official Photo vs. Photo Mode vs. Procedural Mode) | ![Top Face 3-Way Comparison](tools/screenshots/12_comparison_three_way_top.png) |
+| **Bottom Face 3-Way Comparison** (Official Photo vs. Photo Mode vs. Procedural Mode) | ![Bottom Face 3-Way Comparison](tools/screenshots/13_comparison_three_way_bottom.png) |
+| **Interactive 3-Way Comparison Modal** | ![Comparison Modal](tools/screenshots/10_comparison_modal.png) |
+| **Perspective Overview (Procedural PCB)** | ![Perspective Overview](tools/screenshots/01_overview.png) |
 | **MCU Macro Focus & Info Card** | ![MCU Selected](tools/screenshots/04_mcu_selected.png) |
 | **Bottom View & AT7456E OSD** | ![Bottom OSD Selected](tools/screenshots/06_osd_bottom_selected.png) |
-| **Vector Silkscreen Artwork Mode** | ![Vector Artwork Mode](tools/screenshots/03_artwork_mode.png) |
+| **Photographic Texture Mode** | ![Photographic Mode](tools/screenshots/02b_top_photo.png) |
 | **Interactive Guided Tutorial** | ![Tutorial Step](tools/screenshots/07_tutorial_step.png) |
 | **Absent Features Clarification Modal** | ![Absent Features Modal](tools/screenshots/09_absent_modal.png) |
 

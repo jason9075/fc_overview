@@ -115,4 +115,8 @@ export class CameraManager {
 
     this.animateTo(camTargetPos, worldPos, upVector, 0.65);
   }
+
+  getCurrentSide(): 'top' | 'bottom' {
+    return this.camera.position.y < 0 ? 'bottom' : 'top';
+  }
 }

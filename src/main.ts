@@ -13,6 +13,7 @@ import { InfoCard } from './ui/infoCard';
 import { Toolbar } from './ui/toolbar';
 import { TutorialGuide } from './ui/tutorial';
 import { ComponentDrawer, AbsentModal } from './ui/glossary';
+import { ComparisonModal } from './ui/comparisonModal';
 import { componentCatalog, type ComponentId } from './data/components';
 import { placements } from './data/placement';
 
@@ -108,7 +109,16 @@ function init() {
     },
   });
 
-  new Toolbar(appContainer, {
+  let toolbar: Toolbar;
+
+  const comparisonModal = new ComparisonModal(appContainer, materials, {
+    onApplyMode: (mode) => {
+      materials.setTextureMode(mode);
+      toolbar.setTextureMode(mode);
+    },
+  });
+
+  toolbar = new Toolbar(appContainer, {
     onViewTop: () => camManager.viewTop(),
     onViewBottom: () => camManager.viewBottom(),
     onViewReset: () => {
@@ -116,6 +126,8 @@ function init() {
       selectComponent(null);
     },
     onToggleTexture: (mode) => materials.setTextureMode(mode),
+    onToggleSchematic: (active) => materials.toggleSchematicOverlay(active),
+    onOpenComparison: () => comparisonModal.show(camManager.getCurrentSide()),
     onOpenTutorial: () => tutorialGuide.start(0),
     onToggleList: () => drawer.toggle(),
     onOpenGlossary: () => absentModal.show(),
@@ -285,6 +297,7 @@ function init() {
       selectComponent(null);
       drawer.close();
       absentModal.hide();
+      comparisonModal.hide();
       tutorialGuide.close();
     }
   });

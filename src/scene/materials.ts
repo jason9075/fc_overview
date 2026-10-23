@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { ProceduralPCBGenerator, type ProceduralPCBTextures } from './proceduralPCB';
+
+export type TextureMode = 'photo' | 'procedural' | 'artwork';
 
 /**
  * PBR materials for the Matrix 1S 5IN1 II board and electronic components.
@@ -45,13 +48,16 @@ export class MaterialLibrary {
   readonly topFaceMat: THREE.MeshStandardMaterial;
   readonly bottomFaceMat: THREE.MeshStandardMaterial;
 
-  // Textures
+  // Photographic textures (from official rectified product photos)
   topPhotoTex: THREE.Texture | null = null;
   bottomPhotoTex: THREE.Texture | null = null;
-  topArtTex: THREE.Texture | null = null;
-  bottomArtTex: THREE.Texture | null = null;
 
-  private textureMode: 'photo' | 'artwork' = 'photo';
+  // Procedural PBR Texture Suites (Physically Plausible Layered Model)
+  topProcedural: ProceduralPCBTextures | null = null;
+  bottomProcedural: ProceduralPCBTextures | null = null;
+
+  private textureMode: 'photo' | 'procedural' = 'procedural';
+  private showSchematicOverlay = false;
 
   constructor() {
     this.substrateEdge = new THREE.MeshStandardMaterial({
@@ -62,8 +68,8 @@ export class MaterialLibrary {
 
     this.goldPlating = new THREE.MeshStandardMaterial({
       color: 0xd4af37,
-      roughness: 0.35,
-      metalness: 0.85,
+      roughness: 0.25,
+      metalness: 0.92,
     });
 
     this.solderTin = new THREE.MeshStandardMaterial({
@@ -138,8 +144,8 @@ export class MaterialLibrary {
 
     this.topFaceMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.7,
-      metalness: 0.12,
+      roughness: 1.0,
+      metalness: 1.0,
       polygonOffset: true,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
@@ -147,12 +153,28 @@ export class MaterialLibrary {
 
     this.bottomFaceMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.7,
-      metalness: 0.12,
+      roughness: 1.0,
+      metalness: 1.0,
       polygonOffset: true,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
     });
+
+    // Initialize Procedural PBR Textures
+    this.rebuildProceduralTextures();
+  }
+
+  /**
+   * Generates or updates the procedural PBR textures.
+   */
+  rebuildProceduralTextures() {
+    this.topProcedural = ProceduralPCBGenerator.generate('top', {
+      showSchematicOverlay: this.showSchematicOverlay,
+    });
+    this.bottomProcedural = ProceduralPCBGenerator.generate('bottom', {
+      showSchematicOverlay: this.showSchematicOverlay,
+    });
+    this.updateTextureMaps();
   }
 
   loadTextures(onLoad?: () => void) {
@@ -160,7 +182,7 @@ export class MaterialLibrary {
     let loaded = 0;
     const checkAll = () => {
       loaded++;
-      if (loaded >= 4) {
+      if (loaded >= 2) {
         this.updateTextureMaps();
         if (onLoad) onLoad();
       }
@@ -176,30 +198,60 @@ export class MaterialLibrary {
 
     this.topPhotoTex = loader.load('./assets/top_photo.jpg', (t) => { configure(t); checkAll(); });
     this.bottomPhotoTex = loader.load('./assets/bottom_photo.jpg', (t) => { configure(t); checkAll(); });
-    this.topArtTex = loader.load('./assets/top_artwork.png', (t) => { configure(t); checkAll(); });
-    this.bottomArtTex = loader.load('./assets/bottom_artwork.png', (t) => { configure(t); checkAll(); });
   }
 
-  setTextureMode(mode: 'photo' | 'artwork') {
-    this.textureMode = mode;
+  setTextureMode(mode: TextureMode) {
+    this.textureMode = mode === 'photo' ? 'photo' : 'procedural';
     this.updateTextureMaps();
   }
 
-  getTextureMode(): 'photo' | 'artwork' {
+  getTextureMode(): 'photo' | 'procedural' {
     return this.textureMode;
+  }
+
+  toggleSchematicOverlay(enabled?: boolean) {
+    this.showSchematicOverlay = enabled !== undefined ? enabled : !this.showSchematicOverlay;
+    this.rebuildProceduralTextures();
+  }
+
+  isSchematicOverlayActive(): boolean {
+    return this.showSchematicOverlay;
   }
 
   private updateTextureMaps() {
     if (this.textureMode === 'photo') {
+      // 1. Photographic Mode (Rectified official photos)
       this.topFaceMat.map = this.topPhotoTex;
       this.bottomFaceMat.map = this.bottomPhotoTex;
+      this.topFaceMat.roughnessMap = null;
+      this.bottomFaceMat.roughnessMap = null;
+      this.topFaceMat.metalnessMap = null;
+      this.bottomFaceMat.metalnessMap = null;
+      this.topFaceMat.bumpMap = null;
+      this.bottomFaceMat.bumpMap = null;
       this.topFaceMat.roughness = 0.65;
       this.bottomFaceMat.roughness = 0.65;
+      this.topFaceMat.metalness = 0.12;
+      this.bottomFaceMat.metalness = 0.12;
     } else {
-      this.topFaceMat.map = this.topArtTex;
-      this.bottomFaceMat.map = this.bottomArtTex;
-      this.topFaceMat.roughness = 0.8;
-      this.bottomFaceMat.roughness = 0.8;
+      // 2. Procedural PCB Mode (Physically Plausible PBR Layered Model)
+      if (this.topProcedural && this.bottomProcedural) {
+        this.topFaceMat.map = this.topProcedural.colorMap;
+        this.topFaceMat.roughnessMap = this.topProcedural.roughnessMap;
+        this.topFaceMat.metalnessMap = this.topProcedural.metalnessMap;
+        this.topFaceMat.bumpMap = this.topProcedural.bumpMap;
+        this.topFaceMat.bumpScale = 0.035;
+        this.topFaceMat.roughness = 1.0;
+        this.topFaceMat.metalness = 1.0;
+
+        this.bottomFaceMat.map = this.bottomProcedural.colorMap;
+        this.bottomFaceMat.roughnessMap = this.bottomProcedural.roughnessMap;
+        this.bottomFaceMat.metalnessMap = this.bottomProcedural.metalnessMap;
+        this.bottomFaceMat.bumpMap = this.bottomProcedural.bumpMap;
+        this.bottomFaceMat.bumpScale = 0.035;
+        this.bottomFaceMat.roughness = 1.0;
+        this.bottomFaceMat.metalness = 1.0;
+      }
     }
     this.topFaceMat.needsUpdate = true;
     this.bottomFaceMat.needsUpdate = true;
