@@ -85,9 +85,9 @@ export class CameraManager {
   }
 
   viewBottom() {
-    // Bottom view: perspective view from below-behind looking up at bottom face, with front (-Z) pointing up on screen
+    // Bottom view: perspective view from below-front looking up at bottom face, with front (-Z) pointing up on screen
     this.animateTo(
-      new THREE.Vector3(0, -48, 42),
+      new THREE.Vector3(0, -48, -42),
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0, 1, 0)
     );
@@ -104,7 +104,7 @@ export class CameraManager {
   focusPart(worldPos: THREE.Vector3, side: 'top' | 'bottom' | 'annotation') {
     const isBottom = side === 'bottom';
     const yOffset = isBottom ? -22 : 22;
-    const zOffset = isBottom ? 18 : 18;
+    const zOffset = isBottom ? -18 : 18;
     const upVector = new THREE.Vector3(0, 1, 0);
 
     const camTargetPos = new THREE.Vector3(
