@@ -76,18 +76,18 @@ export class CameraManager {
   }
 
   viewTop() {
-    // Top view: looking toward front-top of board, with front (-Z) pointing up on screen
-    this.animateTo(
-      new THREE.Vector3(0, 54, 18),
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 1, 0)
-    );
+    this.viewFace(1);
   }
 
   viewBottom() {
-    // Bottom view: perspective view from below-front looking up at bottom face, with front (-Z) pointing up on screen
+    this.viewFace(-1);
+  }
+
+  private viewFace(side: 1 | -1) {
+    // Mirror both Y and Z to keep identical tilt/distance and forward (-Z)
+    // pointing upward on screen from either face, with a stable world-up axis.
     this.animateTo(
-      new THREE.Vector3(0, -48, -42),
+      new THREE.Vector3(0, side * 54, side * 18),
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0, 1, 0)
     );
