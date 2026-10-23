@@ -23,8 +23,9 @@ export class CameraManager {
     this.controls.dampingFactor = 0.08;
     this.controls.minDistance = 14;
     this.controls.maxDistance = 130;
-    this.controls.maxPolarAngle = Math.PI; // allow full flip
-    this.controls.minPolarAngle = 0;
+    // Keep a slight padding from exact poles (0 and PI) to avoid Gimbal lock singularities
+    this.controls.minPolarAngle = 0.02;
+    this.controls.maxPolarAngle = Math.PI - 0.02;
   }
 
   update(delta: number) {
@@ -41,7 +42,9 @@ export class CameraManager {
 
       if (t >= 1) {
         this.isTransitioning = false;
+        this.camera.up.set(0, 1, 0);
         this.controls.enabled = true;
+        this.controls.update();
       }
     } else {
       this.controls.update();
@@ -73,20 +76,20 @@ export class CameraManager {
   }
 
   viewTop() {
-    // Top view: looking straight down, with front (-Z) pointing up on screen
+    // Top view: looking toward front-top of board, with front (-Z) pointing up on screen
     this.animateTo(
-      new THREE.Vector3(0, 56, 0.001),
+      new THREE.Vector3(0, 54, 18),
       new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -1)
+      new THREE.Vector3(0, 1, 0)
     );
   }
 
   viewBottom() {
-    // Bottom view: looking from below up at board, with front (-Z) pointing up on screen
+    // Bottom view: perspective view from below-behind looking up at bottom face, with front (-Z) pointing up on screen
     this.animateTo(
-      new THREE.Vector3(0, -56, 0.001),
+      new THREE.Vector3(0, -48, 42),
       new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -1)
+      new THREE.Vector3(0, 1, 0)
     );
   }
 
@@ -100,9 +103,9 @@ export class CameraManager {
 
   focusPart(worldPos: THREE.Vector3, side: 'top' | 'bottom' | 'annotation') {
     const isBottom = side === 'bottom';
-    const yOffset = isBottom ? -18 : 18;
-    const zOffset = isBottom ? 12 : 12;
-    const upVector = isBottom ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+    const yOffset = isBottom ? -22 : 22;
+    const zOffset = isBottom ? 18 : 18;
+    const upVector = new THREE.Vector3(0, 1, 0);
 
     const camTargetPos = new THREE.Vector3(
       worldPos.x * 0.7,
