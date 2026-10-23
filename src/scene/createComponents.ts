@@ -237,7 +237,7 @@ function createThroughHolePad(materials: MaterialLibrary, p: Placement): THREE.G
 
   const geo = new THREE.ShapeGeometry(shape, 16);
   geo.rotateX(-Math.PI / 2);
-  const pad = new THREE.Mesh(geo, materials.goldPlating);
+  const pad = new THREE.Mesh(geo, materials.solderPadGold);
   pad.position.y = 0.01;
   g.add(pad);
 

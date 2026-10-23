@@ -143,6 +143,23 @@ async function main() {
     assert.equal(diagramResponse.ok(), true, 'Manufacturer wiring diagram must be available');
     await page.click('#btn-close-drawer');
 
+    const connectorViews = [
+      ['battery_connector', /BT2.0/, '13_battery_highlight.png'],
+      ['motor_connectors', /馬達接頭/, '14_motor_connector_highlight.png'],
+      ['usb_connector', /設定介面/, '15_usb_connector_highlight.png'],
+      ['camera_connector', /相機/, '16_camera_connector_highlight.png'],
+    ];
+    for (const [id, title, filename] of connectorViews) {
+      await page.click('#btn-toggle-list');
+      await page.click(`.drawer-item[data-id="${id}"]`);
+      await page.click('#btn-close-drawer');
+      await page.waitForTimeout(900);
+      assert.match(await page.locator('.card-title').textContent(), title);
+      await page.screenshot({ path: path.join(outDir, filename) });
+    }
+    await page.keyboard.press('Escape');
+    assert.match(await page.locator('.card-title').textContent(), /飛控總覽/);
+
     assert.deepEqual(pageErrors, [], 'Browser must complete without runtime errors');
     console.log('All screenshots and regression checks completed successfully!');
   } finally {

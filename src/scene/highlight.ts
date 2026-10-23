@@ -11,6 +11,7 @@ export class HighlightManager {
 
   // State
   private hoveredId: ComponentId | null = null;
+  private hoveredPlacementKey: string | null = null;
   private selectedId: ComponentId | null = null;
   private selectedPlacementKey: string | null = null;
 
@@ -20,18 +21,11 @@ export class HighlightManager {
   private readonly selectMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
   private readonly dimMaterials = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
 
-  // Selection accent box wireframe in 3D space
-  private readonly selectionBox: THREE.BoxHelper;
+  // Reuse one outline per physical placement, including distributed connectors.
+  private readonly selectionBoxes = new Map<string, THREE.Box3Helper>();
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
-    this.selectionBox = new THREE.BoxHelper(new THREE.Object3D(), 0x00f0ff);
-    this.selectionBox.visible = false;
-    (this.selectionBox.material as THREE.LineBasicMaterial).linewidth = 2;
-    this.selectionBox.renderOrder = 999;
-    (this.selectionBox.material as THREE.LineBasicMaterial).depthTest = false;
-    this.scene.add(this.selectionBox);
-
     this.indexMeshes();
   }
 
@@ -73,9 +67,10 @@ export class HighlightManager {
     });
   }
 
-  setHover(id: ComponentId | null) {
-    if (this.hoveredId === id) return;
+  setHover(id: ComponentId | null, placementKey: string | null = null) {
+    if (this.hoveredId === id && this.hoveredPlacementKey === placementKey) return;
     this.hoveredId = id;
+    this.hoveredPlacementKey = placementKey;
     this.applyHighlights();
   }
 
@@ -93,36 +88,32 @@ export class HighlightManager {
       mesh.material = origMat;
     });
 
-    // 2. Dim other components when a component is selected (contrast enhancement)
-    if (this.selectedId && this.selectedId !== 'board') {
-      const selectedMeshes = new Set(this.meshesByComponent.get(this.selectedId) || []);
-
+    const selectedMeshes = new Set(this.getTargetMeshes(this.selectedId, this.selectedPlacementKey));
+    // A card without model geometry must not dim the entire board.
+    if (selectedMeshes.size > 0) {
       this.allManagedMeshes.forEach((mesh) => {
-        if (!selectedMeshes.has(mesh)) {
-          mesh.material = this.getOrCreateDimMaterial(mesh);
-        }
-      });
-
-      // 3. Apply Selected Highlight to the target meshes (clean emissive glow, markings visible)
-      selectedMeshes.forEach((mesh) => {
-        mesh.material = this.getOrCreateSelectMaterial(mesh);
+        mesh.material = selectedMeshes.has(mesh)
+          ? this.getOrCreateSelectMaterial(mesh)
+          : this.getOrCreateDimMaterial(mesh);
       });
     }
 
-    // 4. Apply Hover Highlight (if hoveredId is not currently selected)
-    if (this.hoveredId && this.hoveredId !== this.selectedId && this.hoveredId !== 'board') {
-      const hoverMeshes = this.meshesByComponent.get(this.hoveredId) || [];
-      hoverMeshes.forEach((mesh) => {
-        mesh.material = this.getOrCreateHoverMaterial(mesh);
-      });
+    for (const mesh of this.getTargetMeshes(this.hoveredId, this.hoveredPlacementKey)) {
+      if (!selectedMeshes.has(mesh)) mesh.material = this.getOrCreateHoverMaterial(mesh);
     }
+  }
+
+  private getTargetMeshes(id: ComponentId | null, placementKey: string | null): THREE.Mesh[] {
+    if (!id || id === 'board') return [];
+    const meshes = this.meshesByComponent.get(id) || [];
+    return placementKey ? meshes.filter((mesh) => this.findPlacementKey(mesh) === placementKey) : meshes;
   }
 
   private getOrCreateHoverMaterial(mesh: THREE.Mesh): THREE.Material | THREE.Material[] {
     let mat = this.hoverMaterials.get(mesh);
     if (!mat) {
       const orig = this.originalMaterials.get(mesh) || mesh.material;
-      mat = this.cloneWithTint(orig, 0x00d8f0, 0.22);
+      mat = this.cloneWithTint(orig, 0x8fbcbb, 0.22);
       this.hoverMaterials.set(mesh, mat);
     }
     return mat;
@@ -132,7 +123,7 @@ export class HighlightManager {
     let mat = this.selectMaterials.get(mesh);
     if (!mat) {
       const orig = this.originalMaterials.get(mesh) || mesh.material;
-      mat = this.cloneWithTint(orig, 0x00f0ff, 0.40);
+      mat = this.cloneWithTint(orig, 0x88c0d0, 0.40);
       this.selectMaterials.set(mesh, mat);
     }
     return mat;
@@ -187,61 +178,39 @@ export class HighlightManager {
   }
 
   private updateSelectionBox() {
-    if (!this.selectedId || this.selectedId === 'board') {
-      this.selectionBox.visible = false;
-      return;
-    }
+    this.selectionBoxes.forEach((outline) => { outline.visible = false; });
+    const targets = this.getTargetMeshes(this.selectedId, this.selectedPlacementKey);
+    if (targets.length === 0) return;
 
-    let targetMeshes: THREE.Mesh[] = [];
-
-    // Level 1: If a specific physical component was clicked, box ONLY that component!
-    if (this.selectedPlacementKey && this.meshesByPlacementKey.has(this.selectedPlacementKey)) {
-      targetMeshes = this.meshesByPlacementKey.get(this.selectedPlacementKey) || [];
-    } else {
-      // Level 2: Functional Group selected
-      const allMeshes = this.meshesByComponent.get(this.selectedId) || [];
-      if (allMeshes.length <= 4) {
-        targetMeshes = allMeshes;
-      } else {
-        // For large distributed groups (like ESC with 16+ parts on both faces),
-        // box the primary cluster on the top face or first placement rather than spanning both sides
-        const topCluster = allMeshes.filter((m) => m.userData.side === 'top' || m.position.y > 0);
-        targetMeshes = topCluster.length > 0 ? topCluster : allMeshes;
+    this.scene.updateMatrixWorld(true);
+    const boundsByPlacement = new Map<string, THREE.Box3>();
+    for (const mesh of targets) {
+      const key = this.findPlacementKey(mesh) || this.selectedId!;
+      const bounds = boundsByPlacement.get(key) || new THREE.Box3();
+      mesh.geometry.computeBoundingBox();
+      if (mesh.geometry.boundingBox) {
+        bounds.union(mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld));
       }
+      boundsByPlacement.set(key, bounds);
     }
 
-    if (targetMeshes.length === 0) {
-      this.selectionBox.visible = false;
-      return;
-    }
-
-    const bbox = new THREE.Box3();
-    targetMeshes.forEach((m) => {
-      m.geometry.computeBoundingBox();
-      if (m.geometry.boundingBox) {
-        const box = m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld);
-        bbox.union(box);
+    for (const [key, bounds] of boundsByPlacement) {
+      if (bounds.isEmpty()) continue;
+      let outline = this.selectionBoxes.get(key);
+      if (!outline) {
+        outline = new THREE.Box3Helper(new THREE.Box3(), 0x88c0d0);
+        outline.name = `selection_outline_${key}`;
+        const material = outline.material as THREE.LineBasicMaterial;
+        material.depthWrite = false;
+        material.toneMapped = false;
+        outline.renderOrder = 999;
+        this.scene.add(outline);
+        this.selectionBoxes.set(key, outline);
       }
-    });
-
-    if (bbox.isEmpty()) {
-      this.selectionBox.visible = false;
-      return;
+      // A real Box3 gives the helper nonempty bounds, even for flat solder pads.
+      outline.box.copy(bounds).expandByScalar(0.2);
+      outline.visible = true;
     }
-
-    // Expand slightly for clean outline gap
-    bbox.expandByScalar(0.35);
-
-    const dummy = new THREE.Object3D();
-    const center = new THREE.Vector3();
-    const size = new THREE.Vector3();
-    bbox.getCenter(center);
-    bbox.getSize(size);
-
-    dummy.position.copy(center);
-    dummy.scale.copy(size);
-    this.selectionBox.setFromObject(dummy);
-    this.selectionBox.visible = true;
   }
 
   private findComponentId(obj: THREE.Object3D | null): ComponentId | null {
@@ -271,6 +240,7 @@ export class HighlightManager {
     }
 
     if (!meshes || meshes.length === 0) return null;
+    this.scene.updateMatrixWorld(true);
     const bbox = new THREE.Box3();
     meshes.forEach((m) => {
       m.geometry.computeBoundingBox();
@@ -291,8 +261,12 @@ export class HighlightManager {
     this.selectMaterials.clear();
     this.dimMaterials.clear();
     this.originalMaterials.clear();
-    this.selectionBox.geometry.dispose();
-    (this.selectionBox.material as THREE.Material).dispose();
+    this.selectionBoxes.forEach((outline) => {
+      this.scene.remove(outline);
+      outline.geometry.dispose();
+      (outline.material as THREE.Material).dispose();
+    });
+    this.selectionBoxes.clear();
   }
 
   private disposeMat(mat: THREE.Material | THREE.Material[]) {

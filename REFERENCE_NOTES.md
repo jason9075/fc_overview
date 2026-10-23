@@ -38,3 +38,9 @@
 ## 3. Electrical Reconstruction Limits
 
 No verified schematic, netlist, or Gerber files are included. The former board-surface schematic overlay has been removed: its hard-coded connections were unsupported, and its coordinates did not follow the placement conversion. Electrical routing and internal planes remain unknown. PBR parameters describe the visualization, not measured hardware properties.
+
+## 4. Interface Highlight Rendering
+
+Selection outlines are UI annotations generated from the actual mesh bounds, not physical PCB geometry. Distributed groups receive one outline per modeled placement; direct hover/click targets only that placement. BT2.0 is represented by its BATT+/GND board pads. The external plug and cable are not reconstructed.
+
+Flat solder-pad materials use stronger polygon offset than the photo face plates to reduce depth conflicts while retaining their photo-estimated coordinates. Unknown component roles remain in `MESH_RESEARCH_NOTES.md`; they are not added to the catalog.

@@ -235,7 +235,7 @@ function init() {
       tooltip.classList.remove('visible');
     }
 
-    highlight.setHover(hoveredId);
+    highlight.setHover(hoveredId, hit.placementKey);
   });
 
   dom.addEventListener('pointerup', (e) => {

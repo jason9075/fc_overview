@@ -23,6 +23,7 @@ The 3D model and interactive features have been automatically validated using he
 | **MCU Macro Focus & Info Card** | ![MCU Selected](tools/screenshots/04_mcu_selected.png) |
 | **Bottom View & AT7456E OSD** | ![Bottom OSD Selected](tools/screenshots/06_osd_bottom_selected.png) |
 | **Photographic Texture Mode** | ![Photographic Mode](tools/screenshots/02_top_view.png) |
+| **BT2.0 Battery Pad Highlight** | ![Battery Pad Highlight](tools/screenshots/13_battery_highlight.png) |
 | **BOOT Button & Firmware Entry** | ![BOOT Button](tools/screenshots/09_boot_button.png) |
 | **UART1 Wiring Reference** | ![UART1 Pads](tools/screenshots/12_uart_pads.png) |
 | **Interactive Guided Tutorial** | ![Tutorial Step](tools/screenshots/07_tutorial_step.png) |
@@ -63,6 +64,8 @@ This project strictly models the **5IN1 II (Second Generation)**, and deliberate
   - Raycaster accounts for opaque substrate intersections, completely eliminating accidental picking of back-face chips through the board.
 - **Nord Information Cards**:
   - Nord Polar Night panels use 88% opacity with backdrop blur, Snow Storm text, and Frost accents. The bottom-left card displays Traditional Chinese hardware titles, status badges (`已確認搭載`, `型號依批次不同`, `推估位置`), functional descriptions, verified specs table, and camera focus shortcuts.
+- **Connector Selection & Highlights**:
+  - Selecting a connector on the board highlights that placement; selecting a catalog group highlights each modeled placement with its own Nord Frost outline. BT2.0 highlights the BATT+/GND solder pads shown in the model. Flat pads use depth bias to stay visible above the photo surface.
 - **Component Catalog Drawer with Active Highlights**:
   - Sidebar drawer allows pilots to browse all components; stays open during browsing with persistent active selection highlights. Confirmed interface cards cover BOOT, camera input, 5V/GND power, UART1, buzzer pads, and LED connections. Cards for pads without modeled geometry link to the manufacturer wiring diagram.
 - **11-Step Guided Educational Tutorial**:

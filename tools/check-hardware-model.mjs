@@ -16,6 +16,8 @@ try {
     const { createComponents } = await import('/src/scene/createComponents.ts');
     const { placements } = await import('/src/data/placement.ts');
     const { createConnectors } = await import('/src/scene/createConnectors.ts');
+    const { HighlightManager } = await import('/src/scene/highlight.ts');
+    const { createPCB } = await import('/src/scene/createPCB.ts');
     const { setupScene } = await import('/src/scene/setupScene.ts');
     const { CameraManager } = await import('/src/scene/cameraControls.ts');
     const controlsElement = document.createElement('div');
@@ -50,6 +52,46 @@ try {
         }
       });
     }
+    scene.scene.add(createPCB(materials).group, assembly, connectors);
+    scene.scene.updateMatrixWorld(true);
+    const highlight = new HighlightManager(scene.scene);
+    const glowingPlacements = () => {
+      const keys = new Set();
+      for (const group of [assembly, connectors]) {
+        group.traverse((node) => {
+          if (node.isMesh && node.userData.placementKey) {
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            if (mats.some((mat) => mat.emissive?.getHex() !== 0 && mat.emissiveIntensity > 0)) keys.add(node.userData.placementKey);
+          }
+        });
+      }
+      return [...keys].sort();
+    };
+    highlight.setSelected('battery_connector');
+    scene.scene.updateMatrixWorld(true);
+    const batteryGlowing = glowingPlacements();
+    const padDepthBias = [];
+    assembly.traverse((node) => {
+      if (node.isMesh && node.userData.componentId === 'battery_connector') {
+        padDepthBias.push(node.material.polygonOffset && node.material.polygonOffsetFactor < materials.topFaceMat.polygonOffsetFactor);
+      }
+    });
+    const outlineSizes = [];
+    scene.scene.traverse((node) => {
+      if (/^Box(3)?Helper$/.test(node.type) && node.visible) {
+        node.geometry.computeBoundingBox();
+        outlineSizes.push(node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld)
+          .getSize(camera.position.clone()).length());
+      }
+    });
+    highlight.setSelected('motor_connectors', 'jst_esc1');
+    const singleConnectorGlowing = glowingPlacements();
+    highlight.setHover('motor_connectors', 'jst_esc2');
+    const neighboringHoverGlowing = glowingPlacements();
+    highlight.setHover(null);
+    highlight.setSelected(null);
+    const clearedGlowing = glowingPlacements();
+    highlight.dispose();
     const unsupportedContacts = placements.filter((p) => p.kind === 'ic' && !p.footprint)
       .filter((p) => assembly.getObjectByName(`ic_${p.key}`).children.length !== 1)
       .map((p) => p.key);
@@ -87,7 +129,7 @@ try {
     let disposalCount = 0;
     textures.forEach((texture) => texture.addEventListener('dispose', () => disposalCount++));
     materials.dispose();
-    return { unsupportedContacts, explicitContacts, photoMapsBound, photosLoaded, disposalCount, views, interactiveParts };
+    return { unsupportedContacts, explicitContacts, photoMapsBound, photosLoaded, disposalCount, views, interactiveParts, batteryGlowing, outlineSizes, singleConnectorGlowing, clearedGlowing, padDepthBias, neighboringHoverGlowing };
   });
   const [top, bottom] = result.views;
   assert.ok(Math.abs(top.distance - bottom.distance) < 1e-6, 'Top and bottom presets must use the same orbit distance');
@@ -102,6 +144,16 @@ try {
     'The existing BOOT button must be selectable on the bottom face');
   assert.ok(result.interactiveParts.some((part) => part.id === 'camera_connector' && part.side === 'top'),
     'The existing camera connector must be selectable on the top face');
+  assert.deepEqual(result.batteryGlowing, ['batt_gnd', 'batt_pos'], 'BT2.0 selection must highlight both battery pads');
+  assert.ok(result.outlineSizes.length > 0 && result.outlineSizes.every((size) => size > 0.1),
+    'Selected battery pads must have visible, nonempty outlines');
+  assert.deepEqual(result.singleConnectorGlowing, ['jst_esc1'],
+    'Selecting one motor connector must not highlight the other connectors');
+  assert.deepEqual(result.neighboringHoverGlowing, ['jst_esc1', 'jst_esc2'],
+    'Hovering another connector in the same group must preserve the selection');
+  assert.ok(result.padDepthBias.length === 2 && result.padDepthBias.every(Boolean),
+    'Selected battery pad materials must keep a stronger depth bias than the photo face');
+  assert.deepEqual(result.clearedGlowing, [], 'Clearing selection must remove connector highlights');
   assert.deepEqual(result.unsupportedContacts, [], 'ICs without documented packages must not invent contacts');
   assert.deepEqual(result.explicitContacts, [{ position: [1, 0.05, 2], size: [0.5, 0.1, 0.3] }],
     'Visible contacts must follow explicit geometry');

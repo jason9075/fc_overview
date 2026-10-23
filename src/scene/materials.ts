@@ -9,6 +9,9 @@ export class MaterialLibrary {
   // Mounting hole exposed copper/gold rings
   readonly goldPlating: THREE.MeshStandardMaterial;
 
+  // Flat solder pads need stronger depth bias than the photo face plates.
+  readonly solderPadGold: THREE.MeshStandardMaterial;
+
   // Solder joints / tin plating
   readonly solderTin: THREE.MeshStandardMaterial;
 
@@ -60,6 +63,11 @@ export class MaterialLibrary {
       roughness: 0.25,
       metalness: 0.92,
     });
+
+    this.solderPadGold = this.goldPlating.clone();
+    this.solderPadGold.polygonOffset = true;
+    this.solderPadGold.polygonOffsetFactor = -2;
+    this.solderPadGold.polygonOffsetUnits = -2;
 
     this.solderTin = new THREE.MeshStandardMaterial({
       color: 0xd8dde2,
@@ -189,6 +197,7 @@ export class MaterialLibrary {
     this.bottomPhotoTex = null;
     this.substrateEdge.dispose();
     this.goldPlating.dispose();
+    this.solderPadGold.dispose();
     this.solderTin.dispose();
     this.icBody.dispose();
     this.icLead.dispose();
