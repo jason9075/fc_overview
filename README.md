@@ -153,7 +153,7 @@ just
 # Install npm dependencies
 just install
 
-# Start local development server (http://localhost:5173)
+# Start local development server (http://localhost:8080)
 just dev
 
 # Run TypeScript typecheck and build production bundle

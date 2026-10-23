@@ -11,7 +11,7 @@ default:
 install:
     npm install
 
-# 啟動本機 Vite 開發伺服器 (http://localhost:5173)
+# 啟動本機 Vite 開發伺服器 (http://localhost:8080)
 dev:
     npm run dev
 
