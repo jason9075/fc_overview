@@ -61,10 +61,14 @@ async function main() {
   console.log('Opening drawer and selecting MCU...');
   await page.click('#btn-toggle-list');
   await page.waitForTimeout(400);
-  await page.click('.drawer-item[data-id="mcu"]'); // Clicking an item automatically selects & closes drawer
+  await page.click('.drawer-item[data-id="mcu"]');
   await page.waitForTimeout(1000);
   console.log('Taking screenshot: 04_mcu_selected.png ...');
   await page.screenshot({ path: path.join(outDir, '04_mcu_selected.png') });
+
+  // Close drawer before next view
+  await page.click('#btn-close-drawer');
+  await page.waitForTimeout(400);
 
   // 5. Click "背面"
   console.log('Clicking 背面 view...');
@@ -80,6 +84,10 @@ async function main() {
   await page.waitForTimeout(1000);
   console.log('Taking screenshot: 06_osd_bottom_selected.png ...');
   await page.screenshot({ path: path.join(outDir, '06_osd_bottom_selected.png') });
+
+  // Close drawer before tutorial
+  await page.click('#btn-close-drawer');
+  await page.waitForTimeout(400);
 
   // 7. Click "互動教學"
   console.log('Starting tutorial...');

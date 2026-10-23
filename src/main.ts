@@ -128,6 +128,7 @@ function init() {
     highlight.setSelected(id);
     forwardArrow.setPulse(id === 'forward');
     infoCard.showComponent(id || 'board');
+    drawer.setSelected(id);
   }
 
   function focusComponent(id: ComponentId) {

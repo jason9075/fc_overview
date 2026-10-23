@@ -24,6 +24,13 @@ export class ComponentDrawer {
     this.element.classList.remove('open');
   }
 
+  setSelected(id: ComponentId | null) {
+    this.element.querySelectorAll('.drawer-item').forEach((el) => {
+      const itemId = el.getAttribute('data-id');
+      el.classList.toggle('active', itemId === id);
+    });
+  }
+
   private render() {
     const physicalItemsHtml = listOrder
       .map((id) => {
@@ -74,8 +81,9 @@ export class ComponentDrawer {
       el.addEventListener('click', () => {
         const id = el.getAttribute('data-id') as ComponentId;
         if (id) {
+          this.setSelected(id);
           this.onSelect(id);
-          this.close();
+          // Keep drawer open for continuous browsing
         }
       });
     });

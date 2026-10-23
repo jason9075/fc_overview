@@ -613,6 +613,12 @@ html, body {
   border-color: rgba(0, 229, 255, 0.4);
 }
 
+.drawer-item.active {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+}
+
 .drawer-item-title {
   display: flex;
   align-items: center;
