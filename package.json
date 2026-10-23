@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Interactive Three.js explorer for the BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)",
+  "author": "Jason Kuan (jason9075)",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

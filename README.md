@@ -1,221 +1,203 @@
 # BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)
-## 互動式 3D PCB 硬體導覽系統 (Interactive 3D PCB Explorer)
+## Interactive 3D PCB Web Explorer
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-r186-black?logo=three.js)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite)](https://vitejs.dev/)
-[![Status](https://img.shields.io/badge/Specification-Strict%205IN1%20II-success)](https://betafpv.com/products/matrix-1s-5in1-ii-brushless-flight-controller)
+[![Hardware](https://img.shields.io/badge/Target-BETAFPV%205IN1%20II%20(3--Hole)-brightgreen)](https://betafpv.com/products/matrix-1s-5in1-ii-brushless-flight-controller)
 
-專為 **BETAFPV Matrix 1S 無刷飛控 (5IN1 II)** 打造的高仿真、工程級 3D 雙面硬體導覽系統。嚴格依據 BETAFPV 原廠規格與高解析產品圖還原，以正體中文（台灣）提供飛控電子架構、零組件功能定位、飛行知識走讀導覽與未搭載規格釐清。
+An engineering-grade, double-sided **Three.js PBR 3D reconstruction** and interactive hardware explorer for the **BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)**. Strictly modeled after official BETAFPV documentation, high-resolution product photos, and verified specifications. Features educational hardware annotations and an interactive walk-through tutorial in Traditional Chinese (正體中文).
 
 ---
 
-## 📸 視覺驗證與對比預覽 (Visual Verification)
+## 📸 Visual Verification & Comparison
 
-本系統經 Playwright 無頭瀏覽器自動化驗證與渲染截圖，並與原廠標註電路圖進行正反面嚴格對齊：
+The 3D model and interactive features have been automatically validated using headless Chromium via Playwright:
 
-| 視角 / 功能 | 截圖與驗證 |
+| View / Feature | Preview & Visual Evidence |
 | :--- | :--- |
-| **正面 3D 視角 vs. 原廠圖** | ![正面對比](tools/screenshots/10_comparison_top.png) |
-| **背面 3D 視角 vs. 原廠圖** | ![背面對比](tools/screenshots/11_comparison_bottom.png) |
-| **俯瞰總覽視角 (Overview)** | ![總覽](tools/screenshots/01_overview.png) |
-| **MCU 核心特寫與資訊卡** | ![MCU 選取](tools/screenshots/04_mcu_selected.png) |
-| **向量線稿材質切換** | ![向量材質](tools/screenshots/03_artwork_mode.png) |
-| **互動引導走讀教學 (Tutorial)** | ![互動教學](tools/screenshots/07_tutorial_step.png) |
-| **未搭載規格說明 (Absent Features)** | ![未搭載說明](tools/screenshots/09_absent_modal.png) |
+| **Top Face vs. Official Diagram** | ![Top Face Comparison](tools/screenshots/10_comparison_top.png) |
+| **Bottom Face vs. Official Diagram** | ![Bottom Face Comparison](tools/screenshots/11_comparison_bottom.png) |
+| **Perspective Overview** | ![Perspective Overview](tools/screenshots/01_overview.png) |
+| **MCU Macro Focus & Info Card** | ![MCU Selected](tools/screenshots/04_mcu_selected.png) |
+| **Bottom View & AT7456E OSD** | ![Bottom OSD Selected](tools/screenshots/06_osd_bottom_selected.png) |
+| **Vector Silkscreen Artwork Mode** | ![Vector Artwork Mode](tools/screenshots/03_artwork_mode.png) |
+| **Interactive Guided Tutorial** | ![Tutorial Step](tools/screenshots/07_tutorial_step.png) |
+| **Absent Features Clarification Modal** | ![Absent Features Modal](tools/screenshots/09_absent_modal.png) |
 
 ---
 
-## 🎯 硬體規格與防偽防呆宣告 (Hardware Target & Guardrails)
+## 🎯 Hardware Target & Specification Guardrails
 
-本專案**唯一目標**為 **BETAFPV Matrix 1S 5IN1 II (第二代)**，絕非一代 4 孔舊款或 Air 5IN1：
+This project strictly models the **5IN1 II (Second Generation)**, and deliberately rejects conflation with older 4-hole or Air 5IN1 flight controllers:
 
-1. **三孔固定幾何 (Three Mounting Holes)**：
-   - 採用原廠獨特的「兩側橫向耳部 (左右) + 下方單耳 (後方)」三孔固定佈局（非傳統對稱 4 孔）。
-   - 官方標準安裝規格為 $26 \times 26\text{ mm}$ 對角間距（板心至三孔半徑 $H = 26 / \sqrt{2} \approx 18.385\text{ mm}$）。
-2. **基板物理厚度 (1.0 mm Extruded Substrate)**：
-   - 使用真實 `THREE.ExtrudeGeometry` 實體化 $1.0\text{ mm}$ FR4 複合玻纖板身，邊緣呈現深色玻纖質感與鍍金通孔圓環。
-3. **已驗證原廠搭載規格 (Verified Specifications)**：
-   - **主控 MCU**：STM32G473CEU6 (高性能 Arm Cortex-M4 @ 170MHz)
-   - **陀螺儀 / IMU**：依生產批次裝配 ICM42688P / ICM42622 / BMI270 / LSM6DSK320X
-   - **OSD 晶片**：AT7456E 類比字元疊加晶片
-   - **黑盒子儲存**：板載 **16 MB SPI Flash**
-   - **電子變速器 (ESC)**：1S 12A 持續 / 18A 峰值 4-in-1，配置 4 組 JST1.25 馬達插座
-   - **無線遙控接收**：板載 Serial ExpressLRS 2.4GHz (SX1280 + ESP8285 架構)
-   - **圖傳發射 (VTX)**：板載 5.8GHz 400mW 類比圖傳，配置金屬屏蔽罩與 U.FL 天線端子
-   - **調參介面**：SH1.0-4Pin 超小型插座（非板載直焊式 USB-C 座）
-   - **電源輸入**：BT2.0 高性能 1S 電源接頭
-4. **未搭載規格嚴格釐清 (Explicitly Absent Components)**：
-   - ❌ **氣壓計 (Barometer)**：原廠規格明確未列出，**模型上絕不虛構氣壓晶片**。
-   - ❌ **MicroSD 卡槽**：本機已配備 16 MB 板載 Flash，官方未列出且未設計 SD 卡槽。
-   - 兩者收錄於導覽列之「未搭載說明」對話框與側邊目錄，標註狀態「`未列於此機型官方規格`」，並詳細解說其在無人機領域之原理。
-
----
-
-## ✨ 核心互動功能 (Key Features)
-
-- **物理級真實渲染 (PBR Materials)**：
-  - 消光黑防焊阻焊層 (Solder Mask)、沉金焊盤 (ENIG Pads)、陶瓷微型電容 (MLCC)、環氧樹脂晶片封裝 (IC Epoxy) 與尼龍 JST 插座。
-- **雙材質切換模式 (Texture Mode Toggle)**：
-  - 📷 **高解析實拍照片 (Photorealistic)**：原廠高解像度產品照片經單應性 (Homography) 透視校正之實拍質感。
-  - 📐 **向量印刷線稿 (Vector Artwork)**：高對比電路走線、焊盤金環與白絲印向量重建風格。
-- **遮蔽感知拾取演算法 (Occlusion-Aware Raycasting)**：
-  - 透過計算光線穿越外殼之空間相交深度，徹底杜絕穿透不透明 PCB 板身誤選背面元件之問題。
-- **非破壞性光暈選取 (Non-destructive Highlighting)**：
-  - 游標懸停 (Hover) 泛藍冷光微亮，點擊鎖定 (Select) 呈現天藍色外框與發光脈衝，不破壞材質實體屬性。
-- **固定式左下資訊卡 (Fixed Bottom-Left Info Card)**：
-  - 固定於畫面左下角，符合規格指引，不隨視角晃動。
-  - 顯示元件正體中文全名、硬體狀態標籤（`已確認搭載`、`型號依批次不同`、`推估位置`、`未列於此機型官方規格`）、2~4 句功能詳解、關鍵參數對照表與飛手實務提醒。
-- **相機平滑運鏡 (Smooth Macro Camera Transitions)**：
-  - 點擊「定位元件」或在元件目錄點選，視角自動帶平滑立方緩動 (Cubic Easing) 推進至元件上方最佳觀察距離。
-- **12 步驟互動走讀教學 (Guided Interactive Tutorial)**：
-  - 循序引導飛手從「機頭方向」、「主控 MCU」、「陀螺儀姿態感測」、「16MB 黑盒子」、「四合一電調與馬達」、「5.8G 圖傳」、「ELRS 接收」、「OSD 晶片」、「SH1.0 介面」到「未搭載規格剖析」，搭配導覽進度指示與鏡頭自動導引。
+1. **Distinctive 3-Hole Substrate Geometry**:
+   - Accurately models the asymmetric 3 mounting holes (two lateral ear tabs, one rear tab; diagonal spacing $26 \times 26\text{ mm}$, radius $H = 26/\sqrt{2} \approx 18.385\text{ mm}$).
+2. **True 1.0 mm Extruded Substrate**:
+   - Physically extruded FR4 fiberglass core ($1.0\text{ mm}$ thickness) with dark composite edges, gold-plated hole rims, and top/bottom solder mask plates.
+3. **Confirmed Onboard Hardware (Official Listing)**:
+   - **MCU**: STM32G473CEU6 (Arm Cortex-M4 @ 170MHz)
+   - **Gyro / IMU**: Production batch-dependent (ICM42688P / ICM42622 / BMI270 / LSM6DSK320X)
+   - **OSD**: AT7456E analog monochrome OSD
+   - **Blackbox**: **16 MB onboard SPI Flash** (PY25Q128HA)
+   - **ESC**: 4-in-1 1S 12A continuous / 18A peak with 4× JST1.25 motor sockets
+   - **Receiver**: Serial ExpressLRS 2.4 GHz (SX1280/SX1281 RF + ESP8285 MCU)
+   - **VTX**: Integrated 5.8 GHz 400mW analog video transmitter with U.FL antenna jack
+   - **USB Interface**: SH1.0-4Pin micro-connector (not an onboard direct USB-C socket)
+   - **Battery**: BT2.0 1S power leads
+4. **Explicitly Absent Hardware (Strict Non-Fabrication Rule)**:
+   - ❌ **Barometer**: Officially unlisted; **not fabricated on the 3D PCB**.
+   - ❌ **MicroSD Card Slot**: Officially unlisted; **not fabricated on the 3D PCB**.
+   - Both are clearly explained in the interactive glossary with the status badge: `"未列於此機型官方規格"` (Not listed in official specifications for this model).
 
 ---
 
-## 📐 座標系統與空間定義 (Coordinate Conventions)
+## ✨ Key Features
 
-- **長度單位**：$1\text{ Three.js Unit} = 1.0\text{ mm}$。
-- **板身平面**：水平置於 **X-Z 平面**，厚度沿 Y 軸置中（頂面 $Y = +0.5\text{ mm}$，底面 $Y = -0.5\text{ mm}$）。
-- **機頭方向**：飛控本地向前方向定義為 **-Z 軸**（對應畫面初載入之上方）。
-- **背面手性鏡像變換**：
-  - 背面元件安裝嚴格依據旋轉角度進行空間轉換，避免使用負縮放導致法線翻轉與晶片絲印鏡像文字反向。
-- **固定孔中心座標**：
-  - 左側固定孔：$(X, Z) = (-18.385, 0)\text{ mm}$
-  - 右側固定孔：$(X, Z) = (+18.385, 0)\text{ mm}$
-  - 後方固定孔：$(X, Z) = (0, +18.385)\text{ mm}$
+- **PBR Photorealistic & Vector Silkscreen Modes**:
+  - Seamlessly toggle between perspective-rectified high-resolution product photography and high-contrast vector CAD artwork.
+- **Occlusion-Aware Raycast Picking**:
+  - Raycaster accounts for opaque substrate intersections, completely eliminating accidental picking of back-face chips through the board.
+- **Fixed Bottom-Left Information HUD Card**:
+  - Anchored at bottom-left, displaying Traditional Chinese hardware titles, status badges (`已確認搭載`, `型號依批次不同`, `推估位置`, `未列於此機型官方規格`), functional descriptions, verified specs table, and camera focus shortcuts.
+- **Component Catalog Drawer with Active Highlights**:
+  - Sidebar drawer allows pilots to browse all components; stays open during browsing with persistent active selection highlights.
+- **12-Step Guided Educational Tutorial**:
+  - Step-by-step interactive walk-through covering coordinate conventions, core chips, RF systems, ESC power stages, and sensor concepts.
+- **Gimbal-Lock Free Camera Navigation**:
+  - Smooth cubic-eased camera transitions for front, bottom, reset, and component macro-views with singularity-protected polar clamps.
 
 ---
 
-## 📁 專案架構 (Project Structure)
+## 📐 Coordinate Conventions
+
+- **Units**: $1\text{ Three.js unit} = 1.0\text{ mm}$.
+- **Orientation**: PCB rests in the **X-Z plane**, thickness centered on Y = 0 (top face at $Y = +0.5\text{ mm}$, bottom face at $Y = -0.5\text{ mm}$).
+- **Local Forward**: Defined as **-Z axis** (pointing toward the top of the screen in default view).
+- **Bottom Face Handedness**:
+  - Bottom components are positioned with genuine rotation rather than negative scaling, preserving correct surface normals and left-to-right text readability.
+  - Bottom camera view places the nose (-Z) toward the top of the screen, perfectly matching the official BETAFPV `BOTTOM FRONT` reference map.
+
+---
+
+## 📁 Project Structure
 
 ```text
 fc_overview/
+├── Justfile                   # Task runner script (just command-line automation)
+├── LICENSE                    # MIT License (Jason Kuan)
+├── README.md                  # Project documentation (English)
+├── REFERENCE_NOTES.md         # Reference alignment and photo estimation notes
+├── guideline.md               # Original implementation specifications
+├── index.html                 # Web app shell
+├── package.json
 ├── public/
-│   ├── assets/                # 幾何輪廓與透視校正雙面貼圖 (Rectified Textures & Artwork)
+│   ├── assets/                # Rectified homographic textures & vector artwork
 │   │   ├── top_photo.jpg
 │   │   ├── bottom_photo.jpg
 │   │   ├── top_artwork.png
 │   │   └── bottom_artwork.png
-│   └── references/            # 原廠下載圖資與來源對照文檔
+│   └── references/            # Original manufacturer downloads & URL audit
 │       ├── top_front_labeled.jpg
 │       ├── bottom_front_labeled.jpg
 │       ├── solderfree_front.jpg
 │       ├── solderfree_back.jpg
-│       └── SOURCE.md          # 原廠網址、CDN 簽章與下載記錄
+│       └── SOURCE.md
 ├── src/
 │   ├── data/
-│   │   ├── boardSpec.ts       # 官方規格常數與板身尺寸
-│   │   ├── components.ts      # 正體中文技術百科與規格資訊字典
-│   │   ├── placement.ts       # 3D 空間佈局與置信度 (Confidence Level)
+│   │   ├── boardSpec.ts       # Board dimensions, hole coordinates, specs
+│   │   ├── components.ts      # Hardware metadata & Traditional Chinese catalog
+│   │   ├── placement.ts       # 3D component coordinates & confidence levels
 │   │   └── generated/
-│   │       ├── outline.json   # 80 節點三孔板身多邊形頂點
-│   │       └── passives.json  # 數十顆 SMT MLCC 被動元件座標與尺寸
+│   │       ├── outline.json   # 80-vertex 3-hole polygon outline
+│   │       └── passives.json  # Surface-mount passive arrays
 │   ├── scene/
-│   │   ├── setupScene.ts      # 場景、燈光、陰影與相機初始化
-│   │   ├── materials.ts       # PBR 材質庫 (FR4, 金, 錫, 晶片膠體, 尼龍)
-│   │   ├── createPCB.ts       # 1.0mm 3 孔基板擠出與 UV 表面層
-│   │   ├── createComponents.ts# 3D QFN/LGA 封裝、引腳、被動元件與天線座
-│   │   ├── createConnectors.ts# JST1.25 馬達座 (含針腳插槽) & SH1.0 USB 連接器
-│   │   ├── forwardArrow.ts    # 3D 機頭指向箭頭與脈衝動畫
-│   │   ├── cameraControls.ts  # OrbitControls 與平滑相機動畫
-│   │   ├── picking.ts         # 遮蔽感知射線拾取
-│   │   └── highlight.ts       # 發光與選取狀態管理
+│   │   ├── setupScene.ts      # Scene, camera, studio lighting & renderer
+│   │   ├── materials.ts       # Three.js PBR materials (FR4, gold, solder, IC epoxy, nylon)
+│   │   ├── createPCB.ts       # 1.0 mm 3-hole extruded substrate & face finishes
+│   │   ├── createComponents.ts# 3D IC packages, leads, silkscreens, passives
+│   │   ├── createConnectors.ts# JST1.25 motor plugs, SH1.0 USB header, U.FL jack
+│   │   ├── forwardArrow.ts    # 3D nose indicator with animated billboard
+│   │   ├── cameraControls.ts  # OrbitControls & smooth easing camera transitions
+│   │   ├── picking.ts         # Occlusion-aware raycaster
+│   │   └── highlight.ts       # Non-destructive emissive glow & accent boxes
 │   ├── ui/
-│   │   ├── infoCard.ts        # 固定式左下詳細資訊卡
-│   │   ├── toolbar.ts         # 頂部玻璃擬態快捷工具列
-│   │   ├── tutorial.ts        # 12 步互動教學步進導覽
-│   │   └── glossary.ts        # 全元件清單抽屜與未搭載規格彈窗
-│   ├── main.ts                # 主程式入口與事件調度
-│   └── styles.css             # 現代半透明科技感 UI 樣式表
-├── tools/
-│   ├── extract_assets.py      # 原廠照片單應性透視校正與多邊形萃取
-│   ├── screenshots.mjs        # Playwright 自動化無頭測試與多角度驗證截圖
-│   ├── generate_comparison.py # 自動產生 3D 模型與原廠圖並排對照圖
-│   └── screenshots/           # 視覺驗證產出圖庫
-├── Justfile                   # 專案任務管理腳本 (支援 just 指令)
-├── REFERENCE_NOTES.md         # 原廠硬體對照與推估說明備忘錄
-├── guideline.md               # 專案規格需求指引
-└── package.json
+│   │   ├── infoCard.ts        # Fixed bottom-left HUD card
+│   │   ├── toolbar.ts         # Top frosted glass navigation toolbar
+│   │   ├── tutorial.ts        # 12-step guided interactive walkthrough
+│   │   └── glossary.ts        # Component drawer & absent features modal
+│   ├── main.ts                # Application bootstrap & event orchestration
+│   └── styles.css             # Glassmorphism UI stylesheet
+└── tools/
+    ├── extract_assets.py      # Homography rectification & outline extraction
+    ├── screenshots.mjs        # Playwright headless browser test suite
+    ├── generate_comparison.py # Side-by-side validation image generator
+    └── screenshots/           # Generated verification imagery
 ```
 
 ---
 
-## 🚀 快速上手 (Getting Started)
+## 🚀 Quick Start
 
-本專案支援使用 [`just`](https://github.com/casey/just) 任務管理器或標準 `npm` 指令進行管理。
+### Prerequisites
+- [Node.js](https://nodejs.org/) v18.0.0 or higher
+- [just](https://github.com/casey/just) command runner (optional, recommended)
+- [Python 3](https://www.python.org/) with `Pillow` (optional, for asset extraction or comparison scripts)
 
-### 1. 環境需求
-- [Node.js](https://nodejs.org/) v18.0.0 以上
-- [just](https://github.com/casey/just) 命令列工具（選用但推薦）
-- [Python 3](https://www.python.org/)（選用，用於重新執行圖資萃取或截圖拼圖腳本，需裝 `Pillow`）
-
-### 2. 使用 Justfile 便捷管理（推薦）
+### Managing with Justfile (Recommended)
 ```bash
-# 查看所有可用指令
+# List all available recipes
 just
 
-# 安裝相依套件
+# Install npm dependencies
 just install
 
-# 啟動開發伺服器
+# Start local development server (http://localhost:5173)
 just dev
 
-# 型別檢查與生產打包
+# Run TypeScript typecheck and build production bundle
 just build
 
-# 執行自動化測試與截圖生成
+# Preview production build locally
+just preview
+
+# Run automated browser test and capture UI screenshots
 just screenshots
 
-# 產生側面對照圖
+# Generate side-by-side visual comparisons against official diagrams
 just compare
 
-# 一鍵執行全流程驗證 (typecheck + build + screenshots + compare)
+# Run complete verification suite (typecheck + build + screenshots + compare)
 just verify
+
+# Clean build artifacts
+just clean
 ```
 
-### 3. 使用標準 npm 指令
+### Managing with Standard npm Commands
 ```bash
-# 安裝相依套件
 npm install
-
-# 啟動本機開發伺服器 (預設運行於 http://localhost:5173)
 npm run dev
-
-# 執行 TypeScript 靜態型別檢查與 Vite 打包
 npm run build
-
-# 本機預覽生產打包成品
 npm run preview
-```
-
-### 4. 執行自動化測試與截圖生成
-```bash
-# 啟動無頭 Chrome 執行全流程功能點擊測試並自動產出 9 張展示截圖
-node tools/screenshots.mjs
-
-# 執行側面對照圖合成腳本
-python3 tools/generate_comparison.py
+npm run typecheck
 ```
 
 ---
 
-## 🔬 置信度與數據聲明 (Data Confidence Declaration)
+## 🔬 Data Confidence Declaration
 
-在 `src/data/placement.ts` 中，每項空間定義均嚴格標註其置信等級：
+In [`src/data/placement.ts`](src/data/placement.ts), every 3D coordinate is classified by confidence:
 
-- **`verified` (官方確認)**：
-  - 三孔安裝對角距離 $26\text{ mm}$、基板厚度 $1.0\text{ mm}$、主要 IC 型號（STM32G473、AT7456E、16MB Flash 等）、4 組 JST1.25 接頭配置、SH1.0-4P 介面。
-- **`estimated_from_photo` (照片幾何推估)**：
-  - 各晶片中心 $(X, Z)$ 毫米座標係藉由原廠正反面產品照片進行透視單應性校正後測得，非原廠發布之官方 CAD / Gerber 檔案。
-  - 板身外框邊緣凹凸幾何係依據照片高對比度輪廓萃取，提供逼真外觀，但不應作為工業模具或精密機架切割之依據。
-- **`illustrative` (示意性質)**：
-  - 數十顆 0402 / 0603 SMT 陶瓷電容與微型電阻群係根據表面照片密集分佈處生成，數值與內部多層板走線未公開。
+- **`verified`**: Three mounting holes ($26\text{ mm}$ diagonal), board thickness ($1.0\text{ mm}$), official IC part numbers (STM32G473, AT7456E, 16MB Flash, etc.), 4× JST1.25 motor connectors, SH1.0-4P USB connector.
+- **`estimated_from_photo`**: Component XY center coordinates derived from 3-hole homographic perspective rectification of official product photos.
+- **`illustrative`**: Dense arrays of 0402 / 0603 SMT ceramic capacitors and pull-up resistors approximated from surface photos.
 
 ---
 
-## 📜 授權與圖資來源聲明 (References & Sources)
+## 📄 License & Attribution
 
-- BETAFPV 官方產品網址：[BETAFPV Matrix 1S 5IN1 II Brushless Flight Controller](https://betafpv.com/products/matrix-1s-5in1-ii-brushless-flight-controller)
-- 圖資版權與下載鏈結詳見 [`public/references/SOURCE.md`](public/references/SOURCE.md)。
-- 本專案代碼採 MIT 授權釋出，僅供硬體工程導覽與教育學習使用。
+- **Software License**: [MIT License](LICENSE) © 2026 **Jason Kuan (jason9075)**.
+- **Hardware Reference**: [BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)](https://betafpv.com/products/matrix-1s-5in1-ii-brushless-flight-controller).
+- **Product Photos & Diagrams**: Retained under fair-use reference and educational research guidelines; original sources documented in [`public/references/SOURCE.md`](public/references/SOURCE.md).
