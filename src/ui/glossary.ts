@@ -2,10 +2,11 @@ import { componentCatalog, listOrder, glossaryOrder, type ComponentId } from '..
 
 export class ComponentDrawer {
   private readonly element: HTMLElement;
-  private readonly onSelect: (id: ComponentId) => void;
+  private readonly onSelect: (id: ComponentId | null) => void;
   private isOpen = false;
+  private currentSelectedId: ComponentId | null = null;
 
-  constructor(root: HTMLElement, onSelect: (id: ComponentId) => void) {
+  constructor(root: HTMLElement, onSelect: (id: ComponentId | null) => void) {
     this.onSelect = onSelect;
     this.element = document.createElement('div');
     this.element.className = 'component-drawer';
@@ -25,6 +26,7 @@ export class ComponentDrawer {
   }
 
   setSelected(id: ComponentId | null) {
+    this.currentSelectedId = id;
     this.element.querySelectorAll('.drawer-item').forEach((el) => {
       const itemId = el.getAttribute('data-id');
       el.classList.toggle('active', itemId === id);
@@ -81,9 +83,15 @@ export class ComponentDrawer {
       el.addEventListener('click', () => {
         const id = el.getAttribute('data-id') as ComponentId;
         if (id) {
-          this.setSelected(id);
-          this.onSelect(id);
-          // Keep drawer open for continuous browsing
+          if (this.currentSelectedId === id) {
+            // Clicking currently selected item toggles it off
+            this.setSelected(null);
+            this.onSelect(null);
+          } else {
+            // Select and highlight
+            this.setSelected(id);
+            this.onSelect(id);
+          }
         }
       });
     });

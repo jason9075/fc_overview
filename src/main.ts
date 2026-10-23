@@ -88,8 +88,12 @@ function init() {
   });
 
   const drawer = new ComponentDrawer(appContainer, (id) => {
-    selectComponent(id);
-    focusComponent(id);
+    if (id === null) {
+      selectComponent(null);
+    } else {
+      selectComponent(id);
+      focusComponent(id);
+    }
   });
 
   const tutorialGuide = new TutorialGuide(appContainer, {
@@ -123,7 +127,6 @@ function init() {
 
   // Selection & Focus helpers
   function selectComponent(id: ComponentId | null) {
-    if (selectedId === id && id !== null) return;
     selectedId = id;
     highlight.setSelected(id);
     forwardArrow.setPulse(id === 'forward');
@@ -207,7 +210,12 @@ function init() {
       const hit = picker.pick(nx, ny);
 
       if (hit.componentId && hit.componentId !== 'board') {
-        selectComponent(hit.componentId);
+        if (selectedId === hit.componentId) {
+          // Clicking already selected component toggles off
+          selectComponent(null);
+        } else {
+          selectComponent(hit.componentId);
+        }
       } else {
         // Click on background or empty PCB clears component selection / returns to overview
         selectComponent(null);
