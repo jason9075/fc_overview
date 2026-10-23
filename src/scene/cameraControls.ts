@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls.js';
 
 export class CameraManager {
-  readonly controls: OrbitControls;
+  // ArcballControls exposes `target` at runtime but not in its type declarations.
+  readonly controls: ArcballControls & { target: THREE.Vector3 };
   private readonly camera: THREE.PerspectiveCamera;
 
   // Animation transition state
@@ -18,14 +19,12 @@ export class CameraManager {
 
   constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
     this.camera = camera;
-    this.controls = new OrbitControls(camera, domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
+    this.controls = new ArcballControls(camera, domElement) as ArcballControls & { target: THREE.Vector3 };
+    this.controls.setGizmosVisible(false);
+    this.controls.enableAnimations = true;
+    this.controls.dampingFactor = 20;
     this.controls.minDistance = 14;
     this.controls.maxDistance = 130;
-    // Keep a slight padding from exact poles (0 and PI) to avoid Gimbal lock singularities
-    this.controls.minPolarAngle = 0.02;
-    this.controls.maxPolarAngle = Math.PI - 0.02;
   }
 
   update(delta: number) {
