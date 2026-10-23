@@ -7,7 +7,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite)](https://vitejs.dev/)
 [![Hardware](https://img.shields.io/badge/Target-BETAFPV%205IN1%20II%20(3--Hole)-brightgreen)](https://betafpv.com/products/matrix-1s-5in1-ii-brushless-flight-controller)
 
-An engineering-grade, double-sided **Three.js PBR 3D reconstruction** and interactive hardware explorer for the **BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)**. Strictly modeled after official BETAFPV documentation, high-resolution product photos, and verified specifications. Features educational hardware annotations and an interactive walk-through tutorial in Traditional Chinese (正體中文).
+A photo-referenced, double-sided **Three.js PBR 3D visualization** and interactive hardware explorer for the **BETAFPV Matrix 1S Brushless Flight Controller (5IN1 II)**. Uses official BETAFPV documentation and product photos for hardware identification. Component positions, 3D shapes, and material parameters are visual approximations, not verified manufacturing data. Visible IC contacts require explicit sourced geometry. Both PCB faces always use rectified manufacturer photographs. Features educational hardware annotations and an interactive walk-through tutorial in Traditional Chinese (正體中文).
 
 ---
 
@@ -17,15 +17,15 @@ The 3D model and interactive features have been automatically validated using he
 
 | View / Feature | Preview & Visual Evidence |
 | :--- | :--- |
-| **Top Face 3-Way Comparison** (Official Photo vs. Photo Mode vs. Procedural Mode) | ![Top Face 3-Way Comparison](tools/screenshots/12_comparison_three_way_top.png) |
-| **Bottom Face 3-Way Comparison** (Official Photo vs. Photo Mode vs. Procedural Mode) | ![Bottom Face 3-Way Comparison](tools/screenshots/13_comparison_three_way_bottom.png) |
-| **Interactive 3-Way Comparison Modal** | ![Comparison Modal](tools/screenshots/10_comparison_modal.png) |
-| **Perspective Overview (Procedural PCB)** | ![Perspective Overview](tools/screenshots/01_overview.png) |
+| **Top Face Photo Comparison** | ![Top Face Photo Comparison](tools/screenshots/10_comparison_top.png) |
+| **Bottom Face Photo Comparison** | ![Bottom Face Photo Comparison](tools/screenshots/11_comparison_bottom.png) |
+| **Perspective Overview (Photo Texture)** | ![Perspective Overview](tools/screenshots/01_overview.png) |
 | **MCU Macro Focus & Info Card** | ![MCU Selected](tools/screenshots/04_mcu_selected.png) |
 | **Bottom View & AT7456E OSD** | ![Bottom OSD Selected](tools/screenshots/06_osd_bottom_selected.png) |
-| **Photographic Texture Mode** | ![Photographic Mode](tools/screenshots/02b_top_photo.png) |
+| **Photographic Texture Mode** | ![Photographic Mode](tools/screenshots/02_top_view.png) |
+| **BOOT Button & Firmware Entry** | ![BOOT Button](tools/screenshots/09_boot_button.png) |
+| **UART1 Wiring Reference** | ![UART1 Pads](tools/screenshots/12_uart_pads.png) |
 | **Interactive Guided Tutorial** | ![Tutorial Step](tools/screenshots/07_tutorial_step.png) |
-| **Absent Features Clarification Modal** | ![Absent Features Modal](tools/screenshots/09_absent_modal.png) |
 
 ---
 
@@ -47,31 +47,26 @@ This project strictly models the **5IN1 II (Second Generation)**, and deliberate
    - **VTX**: Integrated 5.8 GHz 400mW analog video transmitter with U.FL antenna jack
    - **USB Interface**: SH1.0-4Pin micro-connector (not an onboard direct USB-C socket)
    - **Battery**: BT2.0 1S power leads
-4. **Explicitly Absent Hardware (Strict Non-Fabrication Rule)**:
-   - ❌ **Barometer**: Officially unlisted; **not fabricated on the 3D PCB**.
-   - ❌ **MicroSD Card Slot**: Officially unlisted; **not fabricated on the 3D PCB**.
-   - Both are clearly explained in the interactive glossary with the status badge: `"未列於此機型官方規格"` (Not listed in official specifications for this model).
-5. **Physical Accuracy Guardrails (Physical Accuracy > Visual Decoration > Component Density)**:
-   - ✅ **Solid Mounting Rings**: Clean ENIG annular rings without invented thermal relief spokes.
-   - ✅ **Zero Unverified Vias**: All unverified ground stitching via arrays have been removed.
-   - ✅ **Package-Specific Footprints**: Hand-crafted footprints for UFQFPN-48 (STM32G473), LGA-14 (IMU), USON-8 (Flash), QFN-24 (SX1281), QFN-32 (ESP8285), QFN-20 (BB51), PDFN3333 DFN-8 (Power MOSFETs), SSOP/QFN-28 (AT7456E), SOT-23, 2512 Shunt, JST-1.25, and SH1.0.
-   - ✅ **Zero Invented Traces**: No fake or made-up electrical copper routing on the PCB surface.
-   - ⚠️ **Illustrative Schematic Overlay**: Clearly marked educational bus overlay, separated from physical PCB geometry.
+4. **Visualization Limits**:
+   - Both PCB faces use manufacturer photographs; there is no synthetic PCB texture mode or electrical overlay.
+   - Component shapes and positions are photo-based approximations, not verified CAD.
+   - ICs without documented package geometry use simplified bodies without invented contacts or pin-1 marks. `src/data/footprints.ts` defines sourced visible-contact geometry; no production IC definitions are currently enabled.
+   - Photos cannot establish hidden pads, internal layers, or electrical connectivity. Material settings describe appearance, not measured hardware properties.
 
 ---
 
 ## ✨ Key Features
 
-- **PBR Photorealistic & Vector Silkscreen Modes**:
-  - Seamlessly toggle between perspective-rectified high-resolution product photography and high-contrast vector CAD artwork.
+- **Manufacturer Photo Textures**:
+  - Both board faces display perspective-rectified product photographs. The app has no texture-mode switch or comparison modal. `just compare` generates offline source-photo/model comparisons for visual inspection.
 - **Occlusion-Aware Raycast Picking**:
   - Raycaster accounts for opaque substrate intersections, completely eliminating accidental picking of back-face chips through the board.
-- **Fixed Bottom-Left Information HUD Card**:
-  - Anchored at bottom-left, displaying Traditional Chinese hardware titles, status badges (`已確認搭載`, `型號依批次不同`, `推估位置`, `未列於此機型官方規格`), functional descriptions, verified specs table, and camera focus shortcuts.
+- **Nord Information Cards**:
+  - Nord Polar Night panels use 88% opacity with backdrop blur, Snow Storm text, and Frost accents. The bottom-left card displays Traditional Chinese hardware titles, status badges (`已確認搭載`, `型號依批次不同`, `推估位置`), functional descriptions, verified specs table, and camera focus shortcuts.
 - **Component Catalog Drawer with Active Highlights**:
-  - Sidebar drawer allows pilots to browse all components; stays open during browsing with persistent active selection highlights.
-- **12-Step Guided Educational Tutorial**:
-  - Step-by-step interactive walk-through covering coordinate conventions, core chips, RF systems, ESC power stages, and sensor concepts.
+  - Sidebar drawer allows pilots to browse all components; stays open during browsing with persistent active selection highlights. Confirmed interface cards cover BOOT, camera input, 5V/GND power, UART1, buzzer pads, and LED connections. Cards for pads without modeled geometry link to the manufacturer wiring diagram.
+- **11-Step Guided Educational Tutorial**:
+  - Step-by-step interactive walk-through covering coordinate conventions, core chips, RF systems, ESC power stages, and onboard sensors.
 - **Gimbal-Lock Free Camera Navigation**:
   - Smooth cubic-eased camera transitions for front, bottom, reset, and component macro-views with singularity-protected polar clamps.
 
@@ -100,16 +95,15 @@ fc_overview/
 ├── index.html                 # Web app shell
 ├── package.json
 ├── public/
-│   ├── assets/                # Rectified homographic textures & vector artwork
+│   ├── assets/                # Rectified manufacturer photo textures
 │   │   ├── top_photo.jpg
-│   │   ├── bottom_photo.jpg
-│   │   ├── top_artwork.png
-│   │   └── bottom_artwork.png
+│   │   └── bottom_photo.jpg
 │   └── references/            # Original manufacturer downloads & URL audit
 │       ├── top_front_labeled.jpg
 │       ├── bottom_front_labeled.jpg
 │       ├── solderfree_front.jpg
 │       ├── solderfree_back.jpg
+│       ├── connection_diagram.jpg # Official peripheral wiring reference
 │       └── SOURCE.md
 ├── src/
 │   ├── data/
@@ -132,8 +126,8 @@ fc_overview/
 │   ├── ui/
 │   │   ├── infoCard.ts        # Fixed bottom-left HUD card
 │   │   ├── toolbar.ts         # Top frosted glass navigation toolbar
-│   │   ├── tutorial.ts        # 12-step guided interactive walkthrough
-│   │   └── glossary.ts        # Component drawer & absent features modal
+│   │   ├── tutorial.ts        # 11-step guided interactive walkthrough
+│   │   └── componentDrawer.ts # Onboard component drawer
 │   ├── main.ts                # Application bootstrap & event orchestration
 │   └── styles.css             # Glassmorphism UI stylesheet
 └── tools/
@@ -169,10 +163,13 @@ just build
 # Preview production build locally
 just preview
 
+# Check IC geometry, photo loading, and texture disposal (requires Chrome)
+npm run check:hardware
+
 # Run automated browser test and capture UI screenshots
 just screenshots
 
-# Generate side-by-side visual comparisons against official diagrams
+# Generate side-by-side visual comparisons against official photographs
 just compare
 
 # Run complete verification suite (typecheck + build + screenshots + compare)
