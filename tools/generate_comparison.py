@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""
-Generate side-by-side visual comparison images between:
-1. BETAFPV Official Photograph
-2. Current Reconstructed 3D Model (Photo Mode)
-3. New Procedural PCB Mode (Physically Plausible Layered PBR)
+"""Compare the official photographs with the photo-textured 3D views.
+
+These images verify appearance and orientation, not electrical connectivity.
 """
 
 import os
@@ -16,13 +14,11 @@ def create_comparison():
     refs_dir = os.path.join(root, 'public', 'references')
 
     # Top sources
-    top_proc_path = os.path.join(screenshots_dir, '02_top_view.png')
-    top_photo_path = os.path.join(screenshots_dir, '02b_top_photo.png')
+    top_photo_path = os.path.join(screenshots_dir, '02_top_view.png')
     top_ref_path = os.path.join(refs_dir, 'solderfree_front.jpg')
 
     # Bottom sources
-    bot_proc_path = os.path.join(screenshots_dir, '05_bottom_view.png')
-    bot_photo_path = os.path.join(screenshots_dir, '05b_bottom_photo.png')
+    bot_photo_path = os.path.join(screenshots_dir, '05_bottom_view.png')
     bot_ref_path = os.path.join(refs_dir, 'solderfree_back.jpg')
 
     # Font setup
@@ -41,21 +37,19 @@ def create_comparison():
 
     sets = [
         (
-            '12_comparison_three_way_top.png',
-            'BETAFPV Matrix 1S 5IN1 II · 正面視角三方精度對比 (Top Face 3-Way Comparison)',
+            '10_comparison_top.png',
+            'BETAFPV Matrix 1S 5IN1 II · 正面視角照片與模型外觀對比 (Top Face Photo Comparison)',
             [
                 ('1. BETAFPV 官方實體照片', 'Official Photograph (BETAFPV CDN)', top_ref_path, (148, 163, 184)),
                 ('2. 現行相片貼圖模型', 'Current Photo Texture 3D Mode', top_photo_path, (245, 158, 11)),
-                ('3. 擬真物理程序化 PCB', 'New Procedural PCB Mode (PBR)', top_proc_path, (56, 189, 248)),
             ]
         ),
         (
-            '13_comparison_three_way_bottom.png',
-            'BETAFPV Matrix 1S 5IN1 II · 背面視角三方精度對比 (Bottom Face 3-Way Comparison)',
+            '11_comparison_bottom.png',
+            'BETAFPV Matrix 1S 5IN1 II · 背面視角照片與模型外觀對比 (Bottom Face Photo Comparison)',
             [
                 ('1. BETAFPV 官方實體照片', 'Official Photograph (BETAFPV CDN)', bot_ref_path, (148, 163, 184)),
                 ('2. 現行相片貼圖模型', 'Current Photo Texture 3D Mode', bot_photo_path, (245, 158, 11)),
-                ('3. 擬真物理程序化 PCB', 'New Procedural PCB Mode (PBR)', bot_proc_path, (56, 189, 248)),
             ]
         )
     ]
@@ -84,7 +78,7 @@ def create_comparison():
             resized = im_cropped.resize((cw, target_h), Image.Resampling.LANCZOS)
             valid_cols.append((col_title, col_sub, resized, border_color))
 
-        if len(valid_cols) != 3:
+        if len(valid_cols) != 2:
             continue
 
         total_w = sum(c[2].width for c in valid_cols) + margin * (len(valid_cols) + 1)
@@ -95,7 +89,7 @@ def create_comparison():
 
         # Draw main header
         draw.text((margin, 16), main_title, fill=(241, 245, 249), font=title_font)
-        draw.text((margin, 46), "Physical Plausibility & Rendering Pipeline Comparison: No baked shadows, no false reflections, verified silkscreen only.", fill=(148, 163, 184), font=sub_font)
+        draw.text((margin, 46), "Photo-textured visualization: component geometry is approximate; electrical routing is not reconstructed.", fill=(148, 163, 184), font=sub_font)
 
         # Draw columns
         cur_x = margin
@@ -118,7 +112,7 @@ def create_comparison():
 
         out_path = os.path.join(screenshots_dir, out_name)
         canvas.save(out_path, quality=95)
-        print(f"Saved 3-way side-by-side comparison to {out_path}")
+        print(f"Saved photo comparison to {out_path}")
 
 
 if __name__ == '__main__':

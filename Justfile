@@ -27,11 +27,15 @@ build:
 preview: build
     npm run preview
 
+# 驗證 IC 封裝幾何與相片貼圖載入及釋放
+check-hardware:
+    npm run check:hardware
+
 # 執行 Playwright 無頭自動化測試並截圖存至 tools/screenshots/
 screenshots: build
     node tools/screenshots.mjs
 
-# 產生 3D 模型與 BETAFPV 官方電路圖之側邊對照圖
+# 產生 3D 模型與 BETAFPV 官方照片之側邊對照圖
 compare:
     python3 tools/generate_comparison.py
 
@@ -39,8 +43,8 @@ compare:
 extract-assets:
     python3 tools/extract_assets.py
 
-# 執行完整驗證流程 (型別檢查 + 生產建置 + 截圖測試 + 對照圖合成)
-verify: typecheck build screenshots compare
+# 執行完整驗證流程 (型別檢查 + 生產建置 + 硬體模型檢查 + 截圖測試 + 對照圖合成)
+verify: typecheck build check-hardware screenshots compare
     @echo "✅ 全流程驗證與展示截圖合成完成！"
 
 # 清理建置產物

@@ -30,13 +30,11 @@
   - ESC1: Right-rear
 - **USB Connector**: SH1.0-4Pin horizontal receptacle at the rear edge (`z ≈ +13.5 mm`), not a direct USB-C jack.
 
-### Non-Existent Components (Educational Note)
-- **Barometer**: NOT present on this ultralight 1S whoop board. Included in interactive glossary as educational reference only.
-- **MicroSD Card Slot**: NOT present; flight logs are recorded to the onboard 16 MB flash instead.
-
 ## 2. Derivation Methodology
 1. **Homographic Rectification**: Official high-resolution 1600×1600 marketing photographs were rectified into a metric 2D coordinate system matching the 3-hole triangular layout.
-2. **Procedural Geometry**: All integrated circuits, connectors, antenna sockets, crystal oscillators, and passive MLCC capacitors are rendered as authentic 3D volumetric meshes protruding from the 1.0 mm substrate.
-3. **Texture Layers**:
-   - `photo`: Exact photography projection from official units.
-   - `artwork`: Vector-style reconstruction isolating solder mask, exposed immersion gold pads, and white silkscreen markings.
+2. **Procedural Geometry**: Integrated circuits, connectors, antenna sockets, crystal oscillators, and passive MLCC capacitors are represented by approximate 3D meshes protruding from the 1.0 mm substrate.
+3. **Photo Textures**: Both faces use perspective-rectified manufacturer photographs. Synthetic PCB textures and their mode/comparison controls have been removed; hidden geometry is not reconstructed.
+
+## 3. Electrical Reconstruction Limits
+
+No verified schematic, netlist, or Gerber files are included. The former board-surface schematic overlay has been removed: its hard-coded connections were unsupported, and its coordinates did not follow the placement conversion. Electrical routing and internal planes remain unknown. PBR parameters describe the visualization, not measured hardware properties.

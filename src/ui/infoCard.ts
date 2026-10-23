@@ -44,7 +44,6 @@ export class InfoCard {
         let cls = 'status-verified';
         if (st === '型號依批次不同') cls = 'status-batch';
         else if (st === '推估位置') cls = 'status-estimated';
-        else if (st === '未列於此機型官方規格') cls = 'status-absent';
         return `<span class="chip ${cls}">${st}</span>`;
       })
       .join('');

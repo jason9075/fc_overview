@@ -108,7 +108,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       '位於正面左下的 PUYA PY25Q128HA 是一顆 128 Mbit（即 16 MB）的高速 SPI Flash 晶片。',
       '它用來記錄飛行時的陀螺儀原始訊號、PID 計算值與馬達驅動指令，供飛手事後匯入 Blackbox Explorer 分析機身震動並調校濾波器。',
     ],
-    pilotTip: '16 MB 容量足夠完整記錄數個架次的黑盒子日誌，無須額外安裝沉重且容易震掉的 MicroSD 卡。',
+    pilotTip: '記錄前請確認 Blackbox 設定與可用容量，飛行後下載日誌再進行分析。',
   },
   {
     componentId: 'current_sensor',
@@ -127,23 +127,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     badge: '調參通訊',
     cameraView: 'bottom',
     body: [
-      '為了追求極致輕量與纖薄厚度，此板並未焊接標準的 Type-C 金屬母座，而是採用底面後端的 SH1.0-4Pin 白色接頭。',
+      '底面後端的 SH1.0-4Pin 白色接頭提供 USB 連接介面。',
       '使用隨機附贈的 SH1.0 轉 USB 轉接線即可連接電腦的 Betaflight Configurator 進行韌體更新與調參。',
     ],
     pilotTip: '外出飛行若未攜帶轉接線，也可以直接透過 ESP8285 的 WiFi 連線或無線 ELRS Passthrough 進行部分設定！',
   },
-  {
-    componentId: 'barometer_glossary',
-    title: '教學總結：規格辨析與未搭載功能',
-    badge: '概念知識',
-    cameraView: 'top',
-    body: [
-      '最後需要特別強調：本款 Matrix 1S 5IN1 II 官方規格<strong>明確未搭載「氣壓計 (Barometer)」與「MicroSD 卡槽」</strong>。',
-      '1S 穿越機追求手動直覺特技操控，省略氣壓計可省去重量與成本；而飛行日誌則全數由板載 16 MB Flash 負責。',
-      '現在你可以自由旋轉、縮放 3D 飛控板，點擊任何感興趣的晶片深入學習！',
-    ],
-    pilotTip: '隨時點擊上方「未搭載說明」按鈕可複習這兩項硬體省略背後的工程考量。',
-  },
+
 ];
 
 export interface TutorialCallbacks {

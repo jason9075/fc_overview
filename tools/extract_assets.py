@@ -8,11 +8,6 @@ Outputs:
   src/data/generated/outline.json                  board outline (mm) + hole estimates
   src/data/generated/passives.json                 MLCC-like passives detected on each face
   tools/debug/*.png                                 overlays for visual verification
-Note:
-  Procedural PCB rendering is physically reconstructed in src/scene/proceduralPCB.ts
-  from component placements, footprints, and verified silkscreen, completely eliminating
-  HSV-based color thresholding from the production pipeline.
-
 Coordinate convention (see guideline §5):
   1 unit = 1 mm, board centre at origin, X = right, Z = backward (FORWARD = -Z).
   Bottom-face photos are mirrored left/right when mapped into this frame, because a board

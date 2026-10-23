@@ -92,7 +92,7 @@ function createDiscretePart(materials: MaterialLibrary, p: Placement): THREE.Obj
 }
 
 /**
- * Surface-mount IC package (QFN/LGA) with lead contacts and optional text silkscreen canvas texture.
+ * Simplified IC body with optional markings and explicitly documented contacts.
  */
 function createICPackage(materials: MaterialLibrary, p: Placement): THREE.Group {
   const g = new THREE.Group();
@@ -113,12 +113,6 @@ function createICPackage(materials: MaterialLibrary, p: Placement): THREE.Group 
     if (ctx) {
       ctx.fillStyle = '#1e2022';
       ctx.fillRect(0, 0, 256, 256);
-
-      // Pin 1 indicator dot
-      ctx.fillStyle = '#4a5056';
-      ctx.beginPath();
-      ctx.arc(32, 32, 12, 0, Math.PI * 2);
-      ctx.fill();
 
       // Text marking
       ctx.fillStyle = '#9eabb5';
@@ -145,34 +139,14 @@ function createICPackage(materials: MaterialLibrary, p: Placement): THREE.Group 
   const body = new THREE.Mesh(bodyGeo, bodyMat);
   g.add(body);
 
-  // Silver lead terminals along perimeter (gives authentic QFN solder fillet look)
-  const leadCountX = Math.max(2, Math.floor(w / 0.8));
-  const leadCountZ = Math.max(2, Math.floor(d / 0.8));
-  const leadW = 0.25;
-  const leadH = 0.12;
-  const leadD = 0.35;
-
-  const leadGeoX = new THREE.BoxGeometry(leadW, leadH, leadD);
-  const leadGeoZ = new THREE.BoxGeometry(leadD, leadH, leadW);
-
-  // Leads on +/- Z edges
-  for (let i = 0; i < leadCountX; i++) {
-    const xOff = ((i + 0.5) / leadCountX - 0.5) * (w - 0.4);
-    const leadNorth = new THREE.Mesh(leadGeoX, materials.icLead);
-    leadNorth.position.set(xOff, leadH / 2, -d / 2);
-    const leadSouth = new THREE.Mesh(leadGeoX, materials.icLead);
-    leadSouth.position.set(xOff, leadH / 2, d / 2);
-    g.add(leadNorth, leadSouth);
-  }
-
-  // Leads on +/- X edges
-  for (let i = 0; i < leadCountZ; i++) {
-    const zOff = ((i + 0.5) / leadCountZ - 0.5) * (d - 0.4);
-    const leadWest = new THREE.Mesh(leadGeoZ, materials.icLead);
-    leadWest.position.set(-w / 2, leadH / 2, zOff);
-    const leadEast = new THREE.Mesh(leadGeoZ, materials.icLead);
-    leadEast.position.set(w / 2, leadH / 2, zOff);
-    g.add(leadWest, leadEast);
+  // Land pads are not package pins. Render visible metal only when explicitly
+  // specified by a sourced package definition, never inferred from body size.
+  if (p.footprint?.source.trim()) {
+    for (const contact of p.footprint.contacts) {
+      const lead = new THREE.Mesh(new THREE.BoxGeometry(...contact.sizeMm), materials.icLead);
+      lead.position.set(contact.xMm, contact.yMm, contact.zMm);
+      g.add(lead);
+    }
   }
 
   return g;

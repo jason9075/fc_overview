@@ -12,8 +12,7 @@ import { HighlightManager } from './scene/highlight';
 import { InfoCard } from './ui/infoCard';
 import { Toolbar } from './ui/toolbar';
 import { TutorialGuide } from './ui/tutorial';
-import { ComponentDrawer, AbsentModal } from './ui/glossary';
-import { ComparisonModal } from './ui/comparisonModal';
+import { ComponentDrawer } from './ui/componentDrawer';
 import { componentCatalog, type ComponentId } from './data/components';
 import { placements } from './data/placement';
 
@@ -80,16 +79,12 @@ function init() {
     onSelectComponent: (id) => selectComponent(id),
   });
 
-  const absentModal = new AbsentModal(appContainer, (id) => {
-    selectComponent(id);
-  });
-
   const drawer = new ComponentDrawer(appContainer, (id) => {
     if (id === null) {
       selectComponent(null);
     } else {
       selectComponent(id);
-      focusComponent(id);
+      if (componentCatalog[id].physical) focusComponent(id);
     }
   });
 
@@ -109,28 +104,15 @@ function init() {
     },
   });
 
-  let toolbar: Toolbar;
-
-  const comparisonModal = new ComparisonModal(appContainer, materials, {
-    onApplyMode: (mode) => {
-      materials.setTextureMode(mode);
-      toolbar.setTextureMode(mode);
-    },
-  });
-
-  toolbar = new Toolbar(appContainer, {
+  new Toolbar(appContainer, {
     onViewTop: () => camManager.viewTop(),
     onViewBottom: () => camManager.viewBottom(),
     onViewReset: () => {
       camManager.viewReset();
       selectComponent(null);
     },
-    onToggleTexture: (mode) => materials.setTextureMode(mode),
-    onToggleSchematic: (active) => materials.toggleSchematicOverlay(active),
-    onOpenComparison: () => comparisonModal.show(camManager.getCurrentSide()),
     onOpenTutorial: () => tutorialGuide.start(0),
     onToggleList: () => drawer.toggle(),
-    onOpenGlossary: () => absentModal.show(),
   });
 
   // Selection & Focus state (supporting two levels: Functional Group & Physical Component)
@@ -296,8 +278,6 @@ function init() {
     if (e.key === 'Escape') {
       selectComponent(null);
       drawer.close();
-      absentModal.hide();
-      comparisonModal.hide();
       tutorialGuide.close();
     }
   });

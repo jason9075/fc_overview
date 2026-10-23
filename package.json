@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "assets": "python3 tools/extract_assets.py",
-    "screenshots": "node tools/screenshots.mjs"
+    "screenshots": "node tools/screenshots.mjs",
+    "check:hardware": "node tools/check-hardware-model.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

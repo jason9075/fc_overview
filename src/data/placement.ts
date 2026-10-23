@@ -1,4 +1,5 @@
 import type { ComponentId } from './components';
+import type { Footprint } from './footprints';
 
 /**
  * Component placements on the Matrix 1S 5IN1 II.
@@ -42,7 +43,9 @@ export interface Placement {
   /** [width along local X, depth along local Z, height above the board face] */
   sizeMm: [number, number, number];
   confidence: Confidence;
-  /** Marking text used for the procedural (non-photo) texture. */
+  /** Omit until visible-contact geometry has a documented source. */
+  footprint?: Footprint;
+  /** Illustrative marking text on the simplified 3D component body. */
   marking?: string;
   /** Extra hover text, e.g. ESC channel names. */
   subLabel?: string;
@@ -97,7 +100,7 @@ const top: P[] = [
   { key: 'xtal_top', id: null, side: 'top', kind: 'metal', a: 4.15, b: -6.65, sizeMm: [1.3, 3.1, 0.8] },
   { key: 'xtal_26m', id: null, side: 'top', kind: 'metal', a: 2.1, b: 10.7, sizeMm: [1.5, 2.0, 0.55] },
   { key: 'tcxo', id: null, side: 'top', kind: 'metal', a: -11.0, b: 10.1, sizeMm: [2.0, 2.0, 0.8] },
-  { key: 'cam_in', id: null, side: 'top', kind: 'sh_side', a: 2.55, b: 4.5, sizeMm: [2.7, 5.0, 1.6] },
+  { key: 'cam_in', id: 'camera_connector', side: 'top', kind: 'sh_side', a: 2.55, b: 4.5, sizeMm: [2.7, 5.0, 1.6] },
   { key: 'sot_t1', id: null, side: 'top', kind: 'ic', a: -0.85, b: -0.65, sizeMm: [2.0, 1.6, 0.9] },
   { key: 'sot_t2', id: null, side: 'top', kind: 'ic', a: -5.0, b: 4.5, sizeMm: [1.6, 3.0, 0.9] },
 ];
@@ -140,7 +143,7 @@ const bottom: P[] = [
   { key: 'jst_esc2', id: 'motor_connectors', side: 'bottom', kind: 'jst', a: 11.63, b: 7.05, rot: D45 + Math.PI / 2, sizeMm: [5.95, 3.5, 3.0], subLabel: 'ESC2（右前）' },
   { key: 'jst_esc1', id: 'motor_connectors', side: 'bottom', kind: 'jst', a: 6.95, b: 11.8, sizeMm: [5.95, 3.5, 3.0], subLabel: 'ESC1（右後）' },
   // decorative
-  { key: 'boot_btn', id: null, side: 'bottom', kind: 'button', a: 2.5, b: -10.55, sizeMm: [2.0, 3.4, 0.6] },
+  { key: 'boot_btn', id: 'boot_button', side: 'bottom', kind: 'button', a: 2.5, b: -10.55, sizeMm: [2.0, 3.4, 0.6] },
   { key: 'xtal_8m', id: null, side: 'bottom', kind: 'metal', a: 6.05, b: -11.23, sizeMm: [3.1, 2.4, 0.8] },
   { key: 'xtal_27m', id: null, side: 'bottom', kind: 'metal', a: -3.1, b: 2.0, sizeMm: [2.0, 1.4, 0.5] },
   { key: 'inductor', id: null, side: 'bottom', kind: 'metal', a: -6.38, b: 7.4, sizeMm: [3.4, 2.7, 1.2] },
