@@ -51,6 +51,12 @@ This project strictly models the **5IN1 II (Second Generation)**, and deliberate
    - ❌ **Barometer**: Officially unlisted; **not fabricated on the 3D PCB**.
    - ❌ **MicroSD Card Slot**: Officially unlisted; **not fabricated on the 3D PCB**.
    - Both are clearly explained in the interactive glossary with the status badge: `"未列於此機型官方規格"` (Not listed in official specifications for this model).
+5. **Physical Accuracy Guardrails (Physical Accuracy > Visual Decoration > Component Density)**:
+   - ✅ **Solid Mounting Rings**: Clean ENIG annular rings without invented thermal relief spokes.
+   - ✅ **Zero Unverified Vias**: All unverified ground stitching via arrays have been removed.
+   - ✅ **Package-Specific Footprints**: Hand-crafted footprints for UFQFPN-48 (STM32G473), LGA-14 (IMU), USON-8 (Flash), QFN-24 (SX1281), QFN-32 (ESP8285), QFN-20 (BB51), PDFN3333 DFN-8 (Power MOSFETs), SSOP/QFN-28 (AT7456E), SOT-23, 2512 Shunt, JST-1.25, and SH1.0.
+   - ✅ **Zero Invented Traces**: No fake or made-up electrical copper routing on the PCB surface.
+   - ⚠️ **Illustrative Schematic Overlay**: Clearly marked educational bus overlay, separated from physical PCB geometry.
 
 ---
 

@@ -164,10 +164,22 @@ export class MaterialLibrary {
     this.rebuildProceduralTextures();
   }
 
+  private disposeProceduralSuite(suite: ProceduralPCBTextures | null) {
+    if (!suite) return;
+    suite.colorMap.dispose();
+    suite.roughnessMap.dispose();
+    suite.metalnessMap.dispose();
+    suite.bumpMap.dispose();
+  }
+
   /**
    * Generates or updates the procedural PBR textures.
    */
   rebuildProceduralTextures() {
+    // Clean up previous CanvasTextures to prevent WebGL memory leak
+    this.disposeProceduralSuite(this.topProcedural);
+    this.disposeProceduralSuite(this.bottomProcedural);
+
     this.topProcedural = ProceduralPCBGenerator.generate('top', {
       showSchematicOverlay: this.showSchematicOverlay,
     });
@@ -255,5 +267,31 @@ export class MaterialLibrary {
     }
     this.topFaceMat.needsUpdate = true;
     this.bottomFaceMat.needsUpdate = true;
+  }
+
+  dispose() {
+    this.disposeProceduralSuite(this.topProcedural);
+    this.disposeProceduralSuite(this.bottomProcedural);
+    this.topProcedural = null;
+    this.bottomProcedural = null;
+    this.topPhotoTex?.dispose();
+    this.bottomPhotoTex?.dispose();
+    this.topPhotoTex = null;
+    this.bottomPhotoTex = null;
+    this.substrateEdge.dispose();
+    this.goldPlating.dispose();
+    this.solderTin.dispose();
+    this.icBody.dispose();
+    this.icLead.dispose();
+    this.crystalMetal.dispose();
+    this.jstNylon.dispose();
+    this.shBody.dispose();
+    this.connectorPin.dispose();
+    this.ceramicBody.dispose();
+    this.mlccTan.dispose();
+    this.shuntBody.dispose();
+    this.forwardArrowMat.dispose();
+    this.topFaceMat.dispose();
+    this.bottomFaceMat.dispose();
   }
 }

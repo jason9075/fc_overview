@@ -17,21 +17,21 @@ export interface ProceduralPCBOptions {
 }
 
 /**
- * Procedural PCB Texture Generator.
+ * Physically Plausible Layered Procedural PCB Generator.
  *
- * Mathematically reconstructs physically plausible PBR texture maps for
- * BETAFPV Matrix 1S 5IN1 II:
- * 1. FR4 Core & Satin Black Solder Mask (dielectric, roughness ~0.71)
- * 2. Exposed ENIG Gold Copper Pads & Footprints (metallic 0.96, roughness ~0.22, bump +0.035mm)
- * 3. Verified Silkscreen Typography & Alignment Markings (matte white ink, roughness ~0.88, bump +0.015mm)
- * 4. Plated Ground Stitching Vias & Thermal Relief Rings
- * 5. Optional clearly-labeled Educational Schematic Overlay
+ * Reconstructs accurate PBR textures for BETAFPV Matrix 1S 5IN1 II based on
+ * verified hardware specifications and official high-resolution photographs.
  *
- * Strictly adheres to guidelines:
- * - NO photographic shadows baked into artwork.
- * - NO false copper pads from specular reflections.
- * - NO duplicate component silhouettes under 3D meshes.
- * - NO invented electrical traces.
+ * Guardrails:
+ * - Priority: Physical accuracy > Visual decoration > Component density.
+ * - Solder mask: FR4 core with satin matte black epoxy (dielectric, roughness ~0.71).
+ * - Exposed copper/gold: ENIG plating (metallic 0.96, roughness 0.22, bump +0.035 mm).
+ * - Package-specific footprints: UFQFPN-48, LGA-14, USON-8, QFN-24, QFN-32, QFN-20,
+ *   PDFN3333 DFN-8 MOSFET, SSOP/QFN-28, SOT-23, 2512 Shunt, JST-1.25, SH1.0, U.FL.
+ * - Solid annular mounting rings without invented thermal spokes.
+ * - Zero unverified ground stitching vias.
+ * - Zero invented electrical copper traces.
+ * - Verified silkscreen typography only (↑ FRONT, BATT+, GND, RX-ANT, WiFi-ANT, VTX-ANT, ESC1~4, USB, BOOT, CAM, 5V, TX, RX, BZ+, BZ-).
  */
 export class ProceduralPCBGenerator {
   private static readonly TEX_SIZE = 2048;
@@ -82,7 +82,7 @@ export class ProceduralPCBGenerator {
     bumpCanvas.height = H;
     const bumpCtx = bumpCanvas.getContext('2d', { willReadFrequently: true })!;
 
-    // 2. Clear canvas with pure transparent/white background outside PCB
+    // 2. Initialize background outside PCB boundary
     colorCtx.clearRect(0, 0, W, H);
     roughnessCtx.fillStyle = '#000000';
     roughnessCtx.fillRect(0, 0, W, H);
@@ -91,30 +91,27 @@ export class ProceduralPCBGenerator {
     bumpCtx.fillStyle = '#808080';
     bumpCtx.fillRect(0, 0, W, H);
 
-    // 3. Draw Solder Mask Base on PCB polygon
-    this.drawPCBSubstrate(side, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    // 3. Layer 1: Draw Solder Mask Base on PCB polygon (FR4 + Matte Black Solder Mask)
+    this.drawPCBSubstrate(colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // 4. Draw Ground Stitching Vias
-    this.drawGroundVias(side, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
-
-    // 5. Draw 3 Mounting Hole Plated Rings
+    // 4. Layer 2: Draw 3 Mounting Holes (Solid Gold Annular Rings, No Invented Spokes)
     this.drawMountingHoles(colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // 6. Draw Discrete Placed Component Footprints (Pads & Markings)
+    // 5. Layer 3: Draw Package-Specific Component Footprints (True ENIG Gold Solder Pads)
     this.drawComponentFootprints(side, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // 7. Draw MLCC Passive Footprints (Capacitors & Resistors)
+    // 6. Layer 4: Draw MLCC Passive Footprints (Capacitors & Resistors from passives.json)
     this.drawPassiveFootprints(side, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // 8. Draw Verified Silkscreen Typography & Board Graphics
+    // 7. Layer 5: Draw Verified Silkscreen Markings (↑ FRONT, BATT+, GND, RX-ANT, etc.)
     this.drawSilkscreenMarkings(side, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // 9. Optional Illustrative Schematic Overlay (if enabled)
+    // 8. Optional Illustrative Schematic Overlay (Clearly labeled, not actual PCB traces)
     if (options.showSchematicOverlay) {
       this.drawIllustrativeSchematicOverlay(side, colorCtx);
     }
 
-    // 10. Wrap into Three.js textures with anisotropic filtering and mipmaps
+    // 9. Wrap into Three.js textures
     const configureTex = (tex: THREE.CanvasTexture, isSRGB = false) => {
       tex.colorSpace = isSRGB ? THREE.SRGBColorSpace : THREE.NoColorSpace;
       tex.generateMipmaps = true;
@@ -146,11 +143,10 @@ export class ProceduralPCBGenerator {
   }
 
   // =========================================================================
-  // Layer 1: PCB Substrate & Solder Mask Base
+  // Layer 1: PCB Substrate & Solder Mask Base (Verified)
   // =========================================================================
 
   private static drawPCBSubstrate(
-    _side: 'top' | 'bottom',
     colorCtx: CanvasRenderingContext2D,
     roughnessCtx: CanvasRenderingContext2D,
     metalnessCtx: CanvasRenderingContext2D,
@@ -177,12 +173,12 @@ export class ProceduralPCBGenerator {
       });
     };
 
-    // Color: deep matte black solder mask
+    // Color: Deep matte black solder mask (#141618)
     drawPath(colorCtx);
     colorCtx.fillStyle = '#141618';
     colorCtx.fill('evenodd');
 
-    // Add subtle procedural satin grain to solder mask
+    // Subtle satin grain pattern
     const grainCanvas = document.createElement('canvas');
     grainCanvas.width = 128;
     grainCanvas.height = 128;
@@ -204,24 +200,24 @@ export class ProceduralPCBGenerator {
     colorCtx.fill('evenodd');
     colorCtx.restore();
 
-    // Roughness: satin finish (~0.71 -> rgb(180, 180, 180))
+    // Roughness: Satin finish (~0.71 -> #b4b4b4)
     drawPath(roughnessCtx);
     roughnessCtx.fillStyle = '#b4b4b4';
     roughnessCtx.fill('evenodd');
 
-    // Metalness: non-metal dielectric (0.0 -> rgb(0, 0, 0))
+    // Metalness: Non-metal dielectric (0.0 -> #000000)
     drawPath(metalnessCtx);
     metalnessCtx.fillStyle = '#000000';
     metalnessCtx.fill('evenodd');
 
-    // Bump: neutral base level (128)
+    // Bump: Neutral base plane (128 -> #808080)
     drawPath(bumpCtx);
     bumpCtx.fillStyle = '#808080';
     bumpCtx.fill('evenodd');
   }
 
   // =========================================================================
-  // Layer 2: 3 Mounting Holes & Annular Rings
+  // Layer 2: 3 Mounting Holes (Solid Gold Annular Rings, No Spokes - Verified)
   // =========================================================================
 
   private static drawMountingHoles(
@@ -234,10 +230,10 @@ export class ProceduralPCBGenerator {
 
     holes.forEach((h) => {
       const [cx, cz] = this.toPx(h.x, h.z);
-      const innerR = this.mmToPx(h.r + 0.05);
-      const outerR = this.mmToPx(h.r + 0.95);
+      const innerR = this.mmToPx(h.r + 0.04);
+      const outerR = this.mmToPx(h.r + 0.85);
 
-      // Gold Annular Plated Ring
+      // Solid Gold Annular Plated Ring (Authentic ENIG plating, no invented spokes)
       const drawRing = (ctx: CanvasRenderingContext2D, fill: string) => {
         ctx.beginPath();
         ctx.arc(cx, cz, outerR, 0, Math.PI * 2, false);
@@ -250,19 +246,7 @@ export class ProceduralPCBGenerator {
       drawRing(colorCtx, '#dfb136');
       drawRing(roughnessCtx, '#373737'); // 0.22 smooth metallic
       drawRing(metalnessCtx, '#f5f5f5'); // 0.96 pure metal
-      drawRing(bumpCtx, '#b4b4b4'); // elevated copper pad
-
-      // Thermal relief spokes (4 radial gold spokes connecting to ground plane)
-      const spokeW = this.mmToPx(0.5);
-      const spokeLen = this.mmToPx(1.6);
-      [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].forEach((ang) => {
-        const sx = cx + Math.cos(ang) * (outerR + spokeLen / 2);
-        const sy = cz + Math.sin(ang) * (outerR + spokeLen / 2);
-        this.drawRotatedRect(colorCtx, sx, sy, spokeLen, spokeW, ang, '#dfb136');
-        this.drawRotatedRect(roughnessCtx, sx, sy, spokeLen, spokeW, ang, '#373737');
-        this.drawRotatedRect(metalnessCtx, sx, sy, spokeLen, spokeW, ang, '#f5f5f5');
-        this.drawRotatedRect(bumpCtx, sx, sy, spokeLen, spokeW, ang, '#b4b4b4');
-      });
+      drawRing(bumpCtx, '#b4b4b4'); // +0.035 mm copper relief
 
       // Dark cavity inside drill hole
       const drawHole = (ctx: CanvasRenderingContext2D, fill: string) => {
@@ -280,84 +264,7 @@ export class ProceduralPCBGenerator {
   }
 
   // =========================================================================
-  // Layer 3: Ground Stitching Vias
-  // =========================================================================
-
-  private static drawGroundVias(
-    side: 'top' | 'bottom',
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
-  ) {
-    // Array of authentic ground stitching via positions (in mm)
-    const viaCoords: [number, number][] = [
-      // Along perimeter ground fences
-      [-13.5, -4.5], [-14.2, -2.0], [-14.5, 0.5], [-14.2, 3.0], [-13.5, 5.5],
-      [13.5, -4.5], [14.2, -2.0], [14.5, 0.5], [14.2, 3.0], [13.5, 5.5],
-      [-5.0, -14.2], [-2.5, -14.8], [0.0, -15.0], [2.5, -14.8], [5.0, -14.2],
-      [-4.0, 14.5], [-2.0, 15.2], [0.0, 15.5], [2.0, 15.2], [4.0, 14.5],
-      // Ground plane stitchings near RF and power
-      [-8.5, 3.2], [-9.5, 5.0], [-7.5, 6.8], [-6.2, 12.0], [-8.2, 11.5],
-      [8.5, 3.2], [9.5, 5.0], [7.5, 6.8], [6.2, 12.0], [8.2, 11.5],
-      [-2.0, -4.0], [2.0, -4.0], [-4.0, -8.0], [4.0, -8.0],
-      [-1.5, 3.5], [1.5, 3.5], [-3.5, 1.5], [3.5, 1.5],
-    ];
-
-    const outerR = this.mmToPx(0.32); // 0.64mm pad diameter
-    const innerR = this.mmToPx(0.16); // 0.32mm drill diameter
-
-    viaCoords.forEach(([x, z]) => {
-      // Mirrored coords if bottom face
-      const pxX = side === 'bottom' ? x : x;
-      const [cx, cz] = this.toPx(pxX, z);
-
-      // Outer gold annular ring
-      colorCtx.beginPath();
-      colorCtx.arc(cx, cz, outerR, 0, Math.PI * 2);
-      colorCtx.fillStyle = '#dfb136';
-      colorCtx.fill();
-
-      roughnessCtx.beginPath();
-      roughnessCtx.arc(cx, cz, outerR, 0, Math.PI * 2);
-      roughnessCtx.fillStyle = '#373737';
-      roughnessCtx.fill();
-
-      metalnessCtx.beginPath();
-      metalnessCtx.arc(cx, cz, outerR, 0, Math.PI * 2);
-      metalnessCtx.fillStyle = '#f5f5f5';
-      metalnessCtx.fill();
-
-      bumpCtx.beginPath();
-      bumpCtx.arc(cx, cz, outerR, 0, Math.PI * 2);
-      bumpCtx.fillStyle = '#a0a0a0';
-      bumpCtx.fill();
-
-      // Inner drill hole cavity
-      colorCtx.beginPath();
-      colorCtx.arc(cx, cz, innerR, 0, Math.PI * 2);
-      colorCtx.fillStyle = '#0a0b0d';
-      colorCtx.fill();
-
-      roughnessCtx.beginPath();
-      roughnessCtx.arc(cx, cz, innerR, 0, Math.PI * 2);
-      roughnessCtx.fillStyle = '#f0f0f0';
-      roughnessCtx.fill();
-
-      metalnessCtx.beginPath();
-      metalnessCtx.arc(cx, cz, innerR, 0, Math.PI * 2);
-      metalnessCtx.fillStyle = '#000000';
-      metalnessCtx.fill();
-
-      bumpCtx.beginPath();
-      bumpCtx.arc(cx, cz, innerR, 0, Math.PI * 2);
-      bumpCtx.fillStyle = '#202020';
-      bumpCtx.fill();
-    });
-  }
-
-  // =========================================================================
-  // Layer 4: Component Footprints & Solder Pads
+  // Layer 3: Package-Specific Footprint Definitions
   // =========================================================================
 
   private static drawComponentFootprints(
@@ -376,243 +283,506 @@ export class ProceduralPCBGenerator {
       const wPx = this.mmToPx(wMm);
       const dPx = this.mmToPx(dMm);
 
-      switch (p.kind) {
-        case 'ic':
-          this.drawQFNFootprint(p, cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+      switch (p.key) {
+        // --- Top Face Packages ---
+        case 'mcu':
+          // STM32G473CEU6: UFQFPN-48 (7 x 7 mm, 0.5 mm pitch, 12 pins/side, 5.1x5.1mm thermal pad)
+          this.drawUFQFPN48(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'shunt':
-          this.drawShuntFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'imu':
+          // ICM42688P: LGA-14 (2.5 x 3.0 mm, 14 pads along perimeter)
+          this.drawLGA14(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'jst':
-          this.drawJSTFootprint(p, cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'flash':
+          // PY25Q128HA: USON-8 / SOP-8 (5.0 x 6.0 mm, 4 pads on top, 4 pads on bottom, pitch 1.27 mm)
+          this.drawUSON8(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'sh_vertical':
-          this.drawSH10VerticalFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'cs_amp':
+          // Current Sense Amp: SOT23-5 (1.6 x 2.9 mm, 3 pins on one side, 2 on opposite)
+          this.drawSOT23_5(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'sh_side':
-          this.drawSH10SideFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'cs_shunt':
+          // 2512 Shunt Sense Resistor R001 (4.2 x 1.9 mm, 2 heavy terminal pads)
+          this.drawShunt2512(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'ufl':
-          this.drawUFLFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'sx128x':
+        case 'ic_right':
+          // SX1281 / RF QFN-24 (4.0 x 4.0 mm, 6 pins/side, pitch 0.5 mm, center thermal pad)
+          this.drawQFN24(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'button':
-          this.drawButtonFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'esp8285':
+          // ESP8285 MCU: QFN-32 (5.0 x 5.0 mm, 8 pins/side, pitch 0.5 mm, center thermal pad)
+          this.drawQFN32(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'ceramic':
-          this.drawCeramicAntennaFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'mm32f003':
+          // MM32F003: QFN-20 (3.0 x 3.0 mm, 5 pins/side, pitch 0.5 mm, center thermal pad)
+          this.drawQFN20(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'metal':
-          this.drawCrystalFootprint(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        case 'fet_t1':
+        case 'fet_t2':
+        case 'fet_t3':
+        case 'fet_t4':
+        case 'fet_b1':
+        case 'fet_b2':
+        case 'fet_b3':
+        case 'fet_b4':
+        case 'fet_b5':
+        case 'fet_b6':
+        case 'fet_b7':
+        case 'fet_b8':
+          // ESC Power MOSFETs: PDFN3333 DFN-8 (3.0 x 3.0 mm: 4 leads on side 1, large drain tab on side 2)
+          this.drawPDFN3333_MOSFET(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
-        case 'thpad':
-          this.drawThroughHoleSolderPad(p, cx, cz, wPx, dPx, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+        // --- Bottom Face Packages ---
+        case 'esc_mcu1':
+        case 'esc_mcu2':
+        case 'esc_mcu3':
+        case 'esc_mcu4':
+          // BB51 ESC Controller ICs: QFN-20 (3.0 x 3.0 mm, 5 pins/side, pitch 0.5 mm)
+          this.drawQFN20(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'osd':
+          // AT7456E OSD: QFN-28 / SSOP-28 (4.0 x 6.8 mm, 14 leads on each long side, pitch 0.65 mm)
+          this.drawQFN28_OSD(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'vtx_chip':
+          // 5.8G VTX Chip: QFN-32 (5.8 x 5.8 mm, 8 pins/side, pitch 0.5 mm, center thermal pad)
+          this.drawQFN32_VTX(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'inductor':
+          // Power Inductor (3.4 x 2.7 mm, 2 heavy terminal pads)
+          this.drawInductor(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        // --- Connectors & Passives ---
+        case 'jst_esc1':
+        case 'jst_esc2':
+        case 'jst_esc3':
+        case 'jst_esc4':
+          this.drawJST125(p, cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'usb':
+          this.drawSH10Vertical(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'cam_in':
+          this.drawSH10Side(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'vtx_ufl':
+          this.drawUFL(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'boot_btn':
+          this.drawButton(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'wifi_ant':
+          this.drawCeramicAntenna(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'xtal_top':
+        case 'xtal_26m':
+        case 'tcxo':
+        case 'xtal_8m':
+        case 'xtal_27m':
+          this.drawCrystal(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          break;
+
+        case 'sot_t1':
+        case 'sot_t2':
+        case 'sot_b1':
+        case 'sot_b2':
+        case 'sot_b3':
+        case 'sot_b4':
+          this.drawSOT23(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
           break;
 
         default:
+          if (p.kind === 'thpad') {
+            this.drawThroughHoleSolderPad(p, cx, cz, wPx, dPx, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+          }
           break;
       }
     });
   }
 
-  // --- Footprint Sub-renderers ---
+  // --- Specific Footprint Implementations ---
 
-  private static drawQFNFootprint(
-    _p: Placement,
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * STM32G473CEU6: UFQFPN-48 (7.0 x 7.0 mm).
+   * 12 leads per side (pitch 0.5 mm), 5.1 x 5.1 mm center thermal pad.
+   */
+  private static drawUFQFPN48(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
-    // 1. Center Thermal Ground Pad (if package >= 2.5 mm)
-    if (wPx > this.mmToPx(2.2) && dPx > this.mmToPx(2.2)) {
-      const padW = wPx * 0.62;
-      const padD = dPx * 0.62;
+    // 1. Center Thermal Ground Pad
+    const thermalPadSize = this.mmToPx(5.1);
+    this.drawGoldPad(cx, cz, thermalPadSize, thermalPadSize, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-      this.drawRotatedRect(colorCtx, cx, cz, padW, padD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, cx, cz, padW, padD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, cx, cz, padW, padD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, cx, cz, padW, padD, rot, '#b4b4b4');
+    // 2. 48 Perimeter Leads (12 on each side, pitch 0.5 mm)
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.7);
+    const leadWid = this.mmToPx(0.24);
+    const dist = wPx / 2 + leadLen / 2 - this.mmToPx(0.15);
 
-      // Thermal ground vias inside the pad (e.g. 2x2 or 3x3 array)
-      const viaRows = wPx > this.mmToPx(4.5) ? 3 : 2;
-      const viaSpan = padW * 0.65;
-      const step = viaRows > 1 ? viaSpan / (viaRows - 1) : 0;
-      const vR = this.mmToPx(0.14);
+    this.drawPerimeterPads(cx, cz, 12, 12, pitch, pitch, dist, dist, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.08, dPx * 1.08, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
 
-      for (let r = 0; r < viaRows; r++) {
-        for (let c = 0; c < viaRows; c++) {
-          const lx = -viaSpan / 2 + c * step;
-          const lz = -viaSpan / 2 + r * step;
-          const cos = Math.cos(rot);
-          const sin = Math.sin(rot);
-          const vx = cx + lx * cos - lz * sin;
-          const vz = cz + lx * sin + lz * cos;
+  /**
+   * IMU (ICM42688P): LGA-14 (2.5 x 3.0 mm).
+   * 4 leads on each long edge, 3 leads on each short edge.
+   */
+  private static drawLGA14(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.45);
+    const leadWid = this.mmToPx(0.25);
+    const distX = wPx / 2;
+    const distZ = dPx / 2;
 
-          colorCtx.beginPath();
-          colorCtx.arc(vx, vz, vR, 0, Math.PI * 2);
-          colorCtx.fillStyle = '#0a0b0d';
-          colorCtx.fill();
+    this.drawPerimeterPads(cx, cz, 3, 4, pitch, pitch, distX, distZ, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.15, dPx * 1.15, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
 
-          roughnessCtx.beginPath();
-          roughnessCtx.arc(vx, vz, vR, 0, Math.PI * 2);
-          roughnessCtx.fillStyle = '#f0f0f0';
-          roughnessCtx.fill();
+  /**
+   * Flash Memory (PY25Q128HA): USON-8 / SOP-8 (5.0 x 6.0 mm).
+   * 4 leads on North edge, 4 leads on South edge (pitch 1.27 mm). NO leads on East/West.
+   */
+  private static drawUSON8(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    // Center Thermal Pad
+    this.drawGoldPad(cx, cz, this.mmToPx(3.4), this.mmToPx(4.2), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-          metalnessCtx.beginPath();
-          metalnessCtx.arc(vx, vz, vR, 0, Math.PI * 2);
-          metalnessCtx.fillStyle = '#000000';
-          metalnessCtx.fill();
-
-          bumpCtx.beginPath();
-          bumpCtx.arc(vx, vz, vR, 0, Math.PI * 2);
-          bumpCtx.fillStyle = '#202020';
-          bumpCtx.fill();
-        }
-      }
-    }
-
-    // 2. Perimeter SMT Lead Solder Pads (QFN/SOIC pins)
-    const leadCountX = Math.max(2, Math.floor(wPx / this.mmToPx(0.75)));
-    const leadCountZ = Math.max(2, Math.floor(dPx / this.mmToPx(0.75)));
-    const leadW = this.mmToPx(0.26);
-    const leadLen = this.mmToPx(0.75);
-
+    const pitch = this.mmToPx(1.27);
+    const leadLen = this.mmToPx(0.85);
+    const leadWid = this.mmToPx(0.45);
+    const distZ = dPx / 2 + leadLen / 2 - this.mmToPx(0.15);
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
 
-    // North & South perimeter pads
-    for (let i = 0; i < leadCountX; i++) {
-      const lx = ((i + 0.5) / leadCountX - 0.5) * (wPx - this.mmToPx(0.4));
-      // North pad (Z = -dPx/2)
-      const lzN = -dPx / 2 - this.mmToPx(0.1);
-      const wxN = cx + lx * cos - lzN * sin;
-      const wzN = cz + lx * sin + lzN * cos;
-      this.drawRotatedRect(colorCtx, wxN, wzN, leadW, leadLen, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, wxN, wzN, leadW, leadLen, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, wxN, wzN, leadW, leadLen, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, wxN, wzN, leadW, leadLen, rot, '#b4b4b4');
+    [-1.5, -0.5, 0.5, 1.5].forEach((idx) => {
+      const lx = idx * pitch;
+      // North pad
+      const pxN = cx + lx * cos - (-distZ) * sin;
+      const pzN = cz + lx * sin + (-distZ) * cos;
+      this.drawGoldPad(pxN, pzN, leadWid, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-      // South pad (Z = +dPx/2)
-      const lzS = dPx / 2 + this.mmToPx(0.1);
-      const wxS = cx + lx * cos - lzS * sin;
-      const wzS = cz + lx * sin + lzS * cos;
-      this.drawRotatedRect(colorCtx, wxS, wzS, leadW, leadLen, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, wxS, wzS, leadW, leadLen, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, wxS, wzS, leadW, leadLen, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, wxS, wzS, leadW, leadLen, rot, '#b4b4b4');
-    }
+      // South pad
+      const pxS = cx + lx * cos - (distZ) * sin;
+      const pzS = cz + lx * sin + (distZ) * cos;
+      this.drawGoldPad(pxS, pzS, leadWid, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
 
-    // West & East perimeter pads
-    for (let i = 0; i < leadCountZ; i++) {
-      const lz = ((i + 0.5) / leadCountZ - 0.5) * (dPx - this.mmToPx(0.4));
-      // West pad (X = -wPx/2)
-      const lxW = -wPx / 2 - this.mmToPx(0.1);
-      const wxW = cx + lxW * cos - lz * sin;
-      const wzW = cz + lxW * sin + lz * cos;
-      this.drawRotatedRect(colorCtx, wxW, wzW, leadLen, leadW, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, wxW, wzW, leadLen, leadW, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, wxW, wzW, leadLen, leadW, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, wxW, wzW, leadLen, leadW, rot, '#b4b4b4');
-
-      // East pad (X = +wPx/2)
-      const lxE = wPx / 2 + this.mmToPx(0.1);
-      const wxE = cx + lxE * cos - lz * sin;
-      const wzE = cz + lxE * sin + lz * cos;
-      this.drawRotatedRect(colorCtx, wxE, wzE, leadLen, leadW, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, wxE, wzE, leadLen, leadW, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, wxE, wzE, leadLen, leadW, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, wxE, wzE, leadLen, leadW, rot, '#b4b4b4');
-    }
-
-    // 3. Package Silkscreen: Corner alignment tick marks & Pin 1 dot
-    this.drawPackageCornerTicks(cx, cz, wPx * 1.12, dPx * 1.12, rot, colorCtx, roughnessCtx, bumpCtx);
-
-    // Pin 1 dot (circle near top-left of package)
-    const p1DistX = -wPx / 2 - this.mmToPx(0.5);
-    const p1DistZ = -dPx / 2 - this.mmToPx(0.5);
-    const p1x = cx + p1DistX * cos - p1DistZ * sin;
-    const p1z = cz + p1DistX * sin + p1DistZ * cos;
-    const dotR = this.mmToPx(0.2);
-
-    colorCtx.beginPath();
-    colorCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
-    colorCtx.fillStyle = '#f3f6fa';
-    colorCtx.fill();
-
-    roughnessCtx.beginPath();
-    roughnessCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
-    roughnessCtx.fillStyle = '#e0e0e0';
-    roughnessCtx.fill();
-
-    bumpCtx.beginPath();
-    bumpCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
-    bumpCtx.fillStyle = '#9b9b9b';
-    bumpCtx.fill();
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.08, dPx * 1.08, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
   }
 
-  private static drawShuntFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * QFN-24 (SX1281 / RF, 4.0 x 4.0 mm). 6 pins/side, pitch 0.5 mm.
+   */
+  private static drawQFN24(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
-    const padW = wPx * 0.38;
+    this.drawGoldPad(cx, cz, this.mmToPx(2.5), this.mmToPx(2.5), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.65);
+    const leadWid = this.mmToPx(0.24);
+    const dist = wPx / 2 + leadLen / 2 - this.mmToPx(0.12);
+
+    this.drawPerimeterPads(cx, cz, 6, 6, pitch, pitch, dist, dist, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.1, dPx * 1.1, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * QFN-32 (ESP8285 MCU, 5.0 x 5.0 mm). 8 pins/side, pitch 0.5 mm.
+   */
+  private static drawQFN32(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    this.drawGoldPad(cx, cz, this.mmToPx(3.4), this.mmToPx(3.4), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.65);
+    const leadWid = this.mmToPx(0.24);
+    const dist = wPx / 2 + leadLen / 2 - this.mmToPx(0.12);
+
+    this.drawPerimeterPads(cx, cz, 8, 8, pitch, pitch, dist, dist, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.08, dPx * 1.08, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * QFN-20 (BB51 ESC MCUs, 3.0 x 3.0 mm). 5 pins/side, pitch 0.5 mm.
+   */
+  private static drawQFN20(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    this.drawGoldPad(cx, cz, this.mmToPx(1.7), this.mmToPx(1.7), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.55);
+    const leadWid = this.mmToPx(0.22);
+    const dist = wPx / 2 + leadLen / 2 - this.mmToPx(0.12);
+
+    this.drawPerimeterPads(cx, cz, 5, 5, pitch, pitch, dist, dist, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.12, dPx * 1.12, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * ESC Power MOSFET (PDFN3333 / DFN-8, 3.0 x 3.0 mm).
+   * Edge 1 (Pins 1-4: Source & Gate): 4 individual lead pads (pitch 0.65 mm).
+   * Edge 2 (Pins 5-8: Drain): Large continuous thermal drain copper pad.
+   */
+  private static drawPDFN3333_MOSFET(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    // 1. Large Drain Thermal Tab (occupies 60% of package depth)
+    const drainTabW = this.mmToPx(2.5);
+    const drainTabD = this.mmToPx(1.7);
+    const drainOffZ = this.mmToPx(0.45);
+    const dx = cx - drainOffZ * sin;
+    const dz = cz + drainOffZ * cos;
+    this.drawGoldPad(dx, dz, drainTabW, drainTabD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+
+    // 2. 4 Source / Gate leads along opposite edge (pitch 0.65 mm)
+    const pitch = this.mmToPx(0.65);
+    const leadW = this.mmToPx(0.32);
+    const leadL = this.mmToPx(0.65);
+    const leadOffZ = -this.mmToPx(1.25);
+
+    [-1.5, -0.5, 0.5, 1.5].forEach((idx) => {
+      const lx = idx * pitch;
+      const px = cx + lx * cos - leadOffZ * sin;
+      const pz = cz + lx * sin + leadOffZ * cos;
+      this.drawGoldPad(px, pz, leadW, leadL, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
+
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.12, dPx * 1.12, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * AT7456E OSD: QFN-28 (4.0 x 6.8 mm, 7 pins on short sides, 7 pins on long sides, center ground pad).
+   */
+  private static drawQFN28_OSD(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    // Center ground pad
+    this.drawGoldPad(cx, cz, this.mmToPx(2.6), this.mmToPx(5.0), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    const pitchX = this.mmToPx(0.5);
+    const pitchZ = this.mmToPx(0.65);
+    const leadLen = this.mmToPx(0.65);
+    const leadWid = this.mmToPx(0.24);
+
+    this.drawPerimeterPads(cx, cz, 5, 9, pitchX, pitchZ, wPx / 2 + leadLen / 2 - this.mmToPx(0.12), dPx / 2 + leadLen / 2 - this.mmToPx(0.12), leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.08, dPx * 1.08, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * 5.8G VTX Chip (QFN-32, 5.8 x 5.8 mm). 8 pins/side, pitch 0.5 mm, center thermal pad.
+   */
+  private static drawQFN32_VTX(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    this.drawGoldPad(cx, cz, this.mmToPx(3.8), this.mmToPx(3.8), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    const pitch = this.mmToPx(0.5);
+    const leadLen = this.mmToPx(0.7);
+    const leadWid = this.mmToPx(0.24);
+    const dist = wPx / 2 + leadLen / 2 - this.mmToPx(0.12);
+
+    this.drawPerimeterPads(cx, cz, 8, 8, pitch, pitch, dist, dist, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.08, dPx * 1.08, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPin1Dot(cx, cz, wPx, dPx, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * SOT23-5: Current Sense Amp (3 pins on one side, 2 on opposite side).
+   */
+  private static drawSOT23_5(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const pitch = this.mmToPx(0.95);
+    const leadW = this.mmToPx(0.42);
+    const leadL = this.mmToPx(0.65);
+    const distZ = dPx / 2 + leadL / 2 - this.mmToPx(0.1);
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    // Side 1: 3 pins
+    [-1, 0, 1].forEach((idx) => {
+      const lx = idx * pitch;
+      const px = cx + lx * cos - (-distZ) * sin;
+      const pz = cz + lx * sin + (-distZ) * cos;
+      this.drawGoldPad(px, pz, leadW, leadL, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
+
+    // Side 2: 2 pins
+    [-0.5, 0.5].forEach((idx) => {
+      const lx = idx * pitch;
+      const px = cx + lx * cos - distZ * sin;
+      const pz = cz + lx * sin + distZ * cos;
+      this.drawGoldPad(px, pz, leadW, leadL, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
+
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.2, dPx * 1.15, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * SOT-23 / SOT-323: 3-lead transistor package (2 pins on side 1, 1 pin on side 2).
+   */
+  private static drawSOT23(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const pitch = this.mmToPx(0.95);
+    const leadW = this.mmToPx(0.38);
+    const leadL = this.mmToPx(0.55);
+    const distZ = dPx / 2 + leadL / 2 - this.mmToPx(0.1);
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    // 2 pins on side 1
+    [-0.5, 0.5].forEach((idx) => {
+      const lx = idx * pitch;
+      const px = cx + lx * cos - (-distZ) * sin;
+      const pz = cz + lx * sin + (-distZ) * cos;
+      this.drawGoldPad(px, pz, leadW, leadL, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
+
+    // 1 pin on side 2 (center)
+    const px = cx - distZ * -sin;
+    const pz = cz + distZ * cos;
+    this.drawGoldPad(px, pz, leadW, leadL, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.15, dPx * 1.15, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * 2512 Shunt Resistor (R001, 4.2 x 1.9 mm): 2 large high-current terminal solder pads.
+   */
+  private static drawShunt2512(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const padW = wPx * 0.36;
     const padD = dPx * 1.15;
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
 
-    // Left and Right terminal pads
     [-1, 1].forEach((sgn) => {
-      const lx = sgn * (wPx / 2 - padW / 2 + this.mmToPx(0.1));
+      const lx = sgn * (wPx / 2 - padW / 2 + this.mmToPx(0.08));
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
-
-      this.drawRotatedRect(colorCtx, px, pz, padW, padD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, padW, padD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, padW, padD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, padW, padD, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, padW, padD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
-    // Silkscreen outline & R001 text
-    this.drawPackageCornerTicks(cx, cz, wPx * 1.15, dPx * 1.25, rot, colorCtx, roughnessCtx, bumpCtx);
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.15, dPx * 1.2, rot, colorCtx, roughnessCtx, bumpCtx);
     this.drawRotatedText(colorCtx, cx, cz + dPx / 2 + this.mmToPx(0.8), rot, 'R001', this.mmToPx(0.6), '#f3f6fa');
   }
 
-  private static drawJSTFootprint(
-    p: Placement,
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * Power Inductor (3.4 x 2.7 mm): 2 heavy terminal pads.
+   */
+  private static drawInductor(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const padW = this.mmToPx(1.0);
+    const padD = this.mmToPx(2.5);
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    [-1, 1].forEach((sgn) => {
+      const lx = sgn * (wPx / 2 - padW / 2);
+      const px = cx + lx * cos;
+      const pz = cz + lx * sin;
+      this.drawGoldPad(px, pz, padW, padD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    });
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.1, dPx * 1.1, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * Crystal Oscillator: 4 corner SMT pads.
+   */
+  private static drawCrystal(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const padW = this.mmToPx(0.6);
+    const padD = this.mmToPx(0.6);
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    [-1, 1].forEach((sx) => {
+      [-1, 1].forEach((sz) => {
+        const lx = sx * (wPx / 2 - padW / 3);
+        const lz = sz * (dPx / 2 - padD / 3);
+        const px = cx + lx * cos - lz * sin;
+        const pz = cz + lx * sin + lz * cos;
+        this.drawGoldPad(px, pz, padW, padD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+      });
+    });
+    this.drawPackageCornerTicks(cx, cz, wPx * 1.1, dPx * 1.1, rot, colorCtx, roughnessCtx, bumpCtx);
+  }
+
+  /**
+   * JST1.25 Motor Connector: 3 through-hole annular pads (pitch 1.25 mm) + 2 SMD anchor tabs.
+   */
+  private static drawJST125(
+    p: Placement, cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
 
-    // 3 Through-hole gold ring pads (pitch 1.25 mm)
+    // 3 Through-hole annular gold pads (pitch 1.25 mm)
     const pitchPx = this.mmToPx(1.25);
     const outerR = this.mmToPx(0.55);
     const drillR = this.mmToPx(0.32);
@@ -622,7 +792,7 @@ export class ProceduralPCBGenerator {
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
 
-      // Gold Annular Pad
+      // Annular gold pad
       colorCtx.beginPath();
       colorCtx.arc(px, pz, outerR, 0, Math.PI * 2);
       colorCtx.fillStyle = '#dfb136';
@@ -643,7 +813,7 @@ export class ProceduralPCBGenerator {
       bumpCtx.fillStyle = '#b4b4b4';
       bumpCtx.fill();
 
-      // Drill Hole
+      // Drill hole cavity
       colorCtx.beginPath();
       colorCtx.arc(px, pz, drillR, 0, Math.PI * 2);
       colorCtx.fillStyle = '#0a0b0d';
@@ -653,11 +823,6 @@ export class ProceduralPCBGenerator {
       roughnessCtx.arc(px, pz, drillR, 0, Math.PI * 2);
       roughnessCtx.fillStyle = '#f0f0f0';
       roughnessCtx.fill();
-
-      metalnessCtx.beginPath();
-      metalnessCtx.arc(px, pz, drillR, 0, Math.PI * 2);
-      metalnessCtx.fillStyle = '#000000';
-      metalnessCtx.fill();
 
       bumpCtx.beginPath();
       bumpCtx.arc(px, pz, drillR, 0, Math.PI * 2);
@@ -672,56 +837,43 @@ export class ProceduralPCBGenerator {
       const lx = sgn * (wPx / 2 + tabW / 2);
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
-      this.drawRotatedRect(colorCtx, px, pz, tabW, tabD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, tabW, tabD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, tabW, tabD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, tabW, tabD, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, tabW, tabD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
-    // Silkscreen outline box of the JST connector
+    // Connector housing outline
     this.drawRotatedRectOutline(colorCtx, cx, cz, wPx * 1.05, dPx * 1.05, rot, '#f3f6fa', this.mmToPx(0.12));
 
-    // Channel label (ESC1, ESC2, ESC3, ESC4)
+    // Verified channel label: ESC1..4
     const channelName = p.subLabel?.split('（')[0] || (p.key.includes('esc') ? p.key.replace('jst_', '').toUpperCase() : '');
     if (channelName) {
       const lzOff = dPx / 2 + this.mmToPx(1.0);
-      const lxOff = 0;
-      const tx = cx + lxOff * cos - lzOff * sin;
-      const tz = cz + lxOff * sin + lzOff * cos;
+      const tx = cx - lzOff * sin;
+      const tz = cz + lzOff * cos;
       this.drawRotatedText(colorCtx, tx, tz, rot, channelName, this.mmToPx(0.75), '#f3f6fa');
       this.drawRotatedText(roughnessCtx, tx, tz, rot, channelName, this.mmToPx(0.75), '#e0e0e0');
-      this.drawRotatedText(bumpCtx, tx, tz, rot, channelName, this.mmToPx(0.75), '#9b9b9b');
     }
   }
 
-  private static drawSH10VerticalFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * USB SH1.0-4Pin Connector: 4 SMD lead pads (pitch 1.0 mm) + 2 side anchor tabs.
+   */
+  private static drawSH10Vertical(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
-
-    // 4 SMT signal lead pads (pitch 1.0 mm)
     const pitch = this.mmToPx(1.0);
     const leadW = this.mmToPx(0.45);
-    const leadLen = this.mmToPx(1.2);
+    const leadLen = this.mmToPx(1.1);
 
     [-1.5, -0.5, 0.5, 1.5].forEach((idx) => {
       const lx = idx * pitch;
       const lz = -dPx / 2 + leadLen / 2;
       const px = cx + lx * cos - lz * sin;
       const pz = cz + lx * sin + lz * cos;
-      this.drawRotatedRect(colorCtx, px, pz, leadW, leadLen, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, leadW, leadLen, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, leadW, leadLen, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, leadW, leadLen, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, leadW, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
     // 2 Side anchor tabs
@@ -731,33 +883,25 @@ export class ProceduralPCBGenerator {
       const lx = sgn * (wPx / 2 + anchorW / 2);
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
-      this.drawRotatedRect(colorCtx, px, pz, anchorW, anchorD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, anchorW, anchorD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, anchorW, anchorD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, anchorW, anchorD, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, anchorW, anchorD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
-    // Silkscreen outline & "USB" text
     this.drawRotatedRectOutline(colorCtx, cx, cz, wPx * 1.08, dPx * 1.1, rot, '#f3f6fa', this.mmToPx(0.12));
     this.drawRotatedText(colorCtx, cx, cz - dPx / 2 - this.mmToPx(0.9), rot, 'USB', this.mmToPx(0.75), '#f3f6fa');
     this.drawRotatedText(roughnessCtx, cx, cz - dPx / 2 - this.mmToPx(0.9), rot, 'USB', this.mmToPx(0.75), '#e0e0e0');
   }
 
-  private static drawSH10SideFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * Camera SH1.0 Side Connector: 4 SMD leads (pitch 1.0 mm) + 2 side anchor tabs.
+   */
+  private static drawSH10Side(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     this.drawRotatedRectOutline(colorCtx, cx, cz, wPx * 1.08, dPx * 1.1, rot, '#f3f6fa', this.mmToPx(0.12));
     this.drawRotatedText(colorCtx, cx, cz - dPx / 2 - this.mmToPx(0.8), rot, 'CAM', this.mmToPx(0.65), '#f3f6fa');
 
-    // 4 Lead pads
     const pitch = this.mmToPx(1.0);
     const leadW = this.mmToPx(0.4);
     const leadLen = this.mmToPx(1.0);
@@ -768,98 +912,72 @@ export class ProceduralPCBGenerator {
       const lx = idx * pitch;
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
-      this.drawRotatedRect(colorCtx, px, pz, leadW, leadLen, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, leadW, leadLen, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, leadW, leadLen, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, leadW, leadLen, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, leadW, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
   }
 
-  private static drawUFLFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * U.FL VTX Antenna Socket: Center RF signal pad + 2 side ground shield pads.
+   */
+  private static drawUFL(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
 
     // Center RF signal pad
-    const sigW = this.mmToPx(0.8);
-    const sigD = this.mmToPx(0.9);
-    this.drawRotatedRect(colorCtx, cx, cz, sigW, sigD, rot, '#dfb136');
-    this.drawRotatedRect(roughnessCtx, cx, cz, sigW, sigD, rot, '#373737');
-    this.drawRotatedRect(metalnessCtx, cx, cz, sigW, sigD, rot, '#f5f5f5');
-    this.drawRotatedRect(bumpCtx, cx, cz, sigW, sigD, rot, '#b4b4b4');
+    this.drawGoldPad(cx, cz, this.mmToPx(0.8), this.mmToPx(0.9), rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-    // Left and Right ground shield pads
+    // Ground shield pads
     const gndW = this.mmToPx(1.1);
     const gndD = this.mmToPx(2.2);
     [-1, 1].forEach((sgn) => {
       const lx = sgn * (wPx / 2 - gndW / 4);
       const px = cx + lx * cos;
       const pz = cz + lx * sin;
-      this.drawRotatedRect(colorCtx, px, pz, gndW, gndD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, gndW, gndD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, gndW, gndD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, gndW, gndD, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, gndW, gndD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
-    // Silkscreen "VTX-ANT"
     this.drawRotatedText(colorCtx, cx, cz + dPx / 2 + this.mmToPx(0.9), rot, 'VTX-ANT', this.mmToPx(0.65), '#f3f6fa');
     this.drawRotatedText(roughnessCtx, cx, cz + dPx / 2 + this.mmToPx(0.9), rot, 'VTX-ANT', this.mmToPx(0.65), '#e0e0e0');
   }
 
-  private static drawButtonFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * Boot Button: 4 corner SMT solder pads.
+   */
+  private static drawButton(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     const padW = this.mmToPx(0.7);
     const padD = this.mmToPx(0.8);
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
 
-    // 4 Corner pads
     [-1, 1].forEach((sx) => {
       [-1, 1].forEach((sz) => {
         const lx = sx * (wPx / 2);
         const lz = sz * (dPx / 2);
         const px = cx + lx * cos - lz * sin;
         const pz = cz + lx * sin + lz * cos;
-        this.drawRotatedRect(colorCtx, px, pz, padW, padD, rot, '#dfb136');
-        this.drawRotatedRect(roughnessCtx, px, pz, padW, padD, rot, '#373737');
-        this.drawRotatedRect(metalnessCtx, px, pz, padW, padD, rot, '#f5f5f5');
-        this.drawRotatedRect(bumpCtx, px, pz, padW, padD, rot, '#b4b4b4');
+        this.drawGoldPad(px, pz, padW, padD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
       });
     });
 
     this.drawRotatedRectOutline(colorCtx, cx, cz, wPx * 0.9, dPx * 0.9, rot, '#f3f6fa', this.mmToPx(0.1));
     this.drawRotatedText(colorCtx, cx, cz - dPx / 2 - this.mmToPx(0.8), rot, 'BOOT', this.mmToPx(0.65), '#f3f6fa');
-    this.drawRotatedText(roughnessCtx, cx, cz - dPx / 2 - this.mmToPx(0.8), rot, 'BOOT', this.mmToPx(0.65), '#e0e0e0');
   }
 
-  private static drawCeramicAntennaFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+  /**
+   * Ceramic WiFi Antenna (0.9 x 1.8 mm): 2 terminal solder pads.
+   */
+  private static drawCeramicAntenna(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
     const padW = wPx * 1.1;
     const padD = dPx * 0.35;
@@ -870,76 +988,32 @@ export class ProceduralPCBGenerator {
       const lz = sgn * (dPx / 2 - padD / 2);
       const px = cx - lz * sin;
       const pz = cz + lz * cos;
-      this.drawRotatedRect(colorCtx, px, pz, padW, padD, rot, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, px, pz, padW, padD, rot, '#373737');
-      this.drawRotatedRect(metalnessCtx, px, pz, padW, padD, rot, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, px, pz, padW, padD, rot, '#b4b4b4');
+      this.drawGoldPad(px, pz, padW, padD, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
     });
 
     this.drawRotatedText(colorCtx, cx, cz + dPx / 2 + this.mmToPx(0.7), rot, 'WiFi-ANT', this.mmToPx(0.55), '#f3f6fa');
   }
 
-  private static drawCrystalFootprint(
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
-  ) {
-    const padW = this.mmToPx(0.6);
-    const padD = this.mmToPx(0.6);
-    const cos = Math.cos(rot);
-    const sin = Math.sin(rot);
-
-    [-1, 1].forEach((sx) => {
-      [-1, 1].forEach((sz) => {
-        const lx = sx * (wPx / 2 - padW / 3);
-        const lz = sz * (dPx / 2 - padD / 3);
-        const px = cx + lx * cos - lz * sin;
-        const pz = cz + lx * sin + lz * cos;
-        this.drawRotatedRect(colorCtx, px, pz, padW, padD, rot, '#dfb136');
-        this.drawRotatedRect(roughnessCtx, px, pz, padW, padD, rot, '#373737');
-        this.drawRotatedRect(metalnessCtx, px, pz, padW, padD, rot, '#f5f5f5');
-        this.drawRotatedRect(bumpCtx, px, pz, padW, padD, rot, '#b4b4b4');
-      });
-    });
-  }
-
+  /**
+   * Through-hole and surface solder pads (Battery, RX-ANT, Motor pad triplets).
+   */
   private static drawThroughHoleSolderPad(
-    p: Placement,
-    cx: number,
-    cz: number,
-    wPx: number,
-    dPx: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
-    metalnessCtx: CanvasRenderingContext2D,
-    bumpCtx: CanvasRenderingContext2D,
+    p: Placement, cx: number, cz: number, wPx: number, dPx: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
   ) {
-    // Battery Pads or Motor Pads or RX-ANT pad
-    const isBatteryPad = p.key === 'batt_pos' || p.key === 'batt_gnd';
-    const isAntPad = p.key === 'rx_ant';
-
-    if (isBatteryPad) {
-      // Heavy high-current rounded rectangle gold pad
+    if (p.key === 'batt_pos' || p.key === 'batt_gnd') {
+      // Heavy high-current battery pad
       const padW = this.mmToPx(2.4);
       const padD = this.mmToPx(1.6);
-      this.drawRotatedRect(colorCtx, cx, cz, padW, padD, 0, '#dfb136');
-      this.drawRotatedRect(roughnessCtx, cx, cz, padW, padD, 0, '#373737');
-      this.drawRotatedRect(metalnessCtx, cx, cz, padW, padD, 0, '#f5f5f5');
-      this.drawRotatedRect(bumpCtx, cx, cz, padW, padD, 0, '#b4b4b4');
+      this.drawGoldPad(cx, cz, padW, padD, 0, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
 
-      // Silkscreen polarity
       const label = p.key === 'batt_pos' ? 'BATT+' : 'GND';
       const sym = p.key === 'batt_pos' ? '+' : '—';
       this.drawRotatedText(colorCtx, cx, cz - padD / 2 - this.mmToPx(0.8), 0, label, this.mmToPx(0.7), '#f3f6fa');
       this.drawRotatedText(colorCtx, cx, cz, 0, sym, this.mmToPx(1.2), '#141618');
-    } else if (isAntPad) {
-      // Round pad with solder via
+    } else if (p.key === 'rx_ant') {
+      // RX antenna pad with solder hole
       const outerR = this.mmToPx(0.7);
       const holeR = this.mmToPx(0.35);
 
@@ -963,7 +1037,6 @@ export class ProceduralPCBGenerator {
       bumpCtx.fillStyle = '#b4b4b4';
       bumpCtx.fill();
 
-      // Hole
       colorCtx.beginPath();
       colorCtx.arc(cx, cz, holeR, 0, Math.PI * 2);
       colorCtx.fillStyle = '#0a0b0d';
@@ -971,7 +1044,7 @@ export class ProceduralPCBGenerator {
 
       this.drawRotatedText(colorCtx, cx, cz - outerR - this.mmToPx(0.7), 0, 'RX-ANT', this.mmToPx(0.65), '#f3f6fa');
     } else {
-      // Standard circular through-hole motor pad
+      // Motor pad triplet (ESC1..4 through-holes seen on top face)
       const outerR = Math.max(wPx, dPx) * 0.55;
       const holeR = outerR * 0.5;
 
@@ -1003,7 +1076,7 @@ export class ProceduralPCBGenerator {
   }
 
   // =========================================================================
-  // Layer 5: MLCC Passive Footprints (Capacitors & Resistors)
+  // Layer 4: MLCC Passive Footprints (Capacitors & Resistors from passives.json)
   // =========================================================================
 
   private static drawPassiveFootprints(
@@ -1031,17 +1104,13 @@ export class ProceduralPCBGenerator {
         const lx = sgn * (totalLenPx / 2 - padLen / 2 + this.mmToPx(0.08));
         const px = cx + lx * cos;
         const pz = cz + lx * sin;
-
-        this.drawRotatedRect(colorCtx, px, pz, padLen, padWid, rot, '#dfb136');
-        this.drawRotatedRect(roughnessCtx, px, pz, padLen, padWid, rot, '#373737');
-        this.drawRotatedRect(metalnessCtx, px, pz, padLen, padWid, rot, '#f5f5f5');
-        this.drawRotatedRect(bumpCtx, px, pz, padLen, padWid, rot, '#b4b4b4');
+        this.drawGoldPad(px, pz, padLen, padWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
       });
     });
   }
 
   // =========================================================================
-  // Layer 6: Verified Silkscreen Typography & Graphics
+  // Layer 5: Verified Silkscreen Markings (Verified from Product Photographs)
   // =========================================================================
 
   private static drawSilkscreenMarkings(
@@ -1056,7 +1125,7 @@ export class ProceduralPCBGenerator {
     const textBump = '#9b9b9b';
 
     if (side === 'top') {
-      // 1. Prominent Forward Arrow Chevron & "↑ FRONT" text
+      // 1. Prominent Forward Arrow Chevron & "↑ FRONT"
       const [fx, fz] = this.toPx(0, -17.2);
       this.drawForwardChevron(colorCtx, roughnessCtx, bumpCtx, fx, fz, this.mmToPx(3.2));
       this.drawRotatedText(colorCtx, fx, fz - this.mmToPx(1.6), 0, '↑ FRONT', this.mmToPx(0.95), textColor);
@@ -1076,7 +1145,7 @@ export class ProceduralPCBGenerator {
         this.drawRotatedText(roughnessCtx, px, pz, 0, label, this.mmToPx(0.8), textRoughness);
       });
 
-      // 3. Test pads silkscreen near edge: CAM, 5V, TX, RX
+      // 3. Verified Camera / UART Test Pad Labels near right ear
       const padLabels: [number, number, string][] = [
         [4.2, 5.0, 'CAM'],
         [4.2, 6.2, '5V'],
@@ -1088,13 +1157,13 @@ export class ProceduralPCBGenerator {
         this.drawRotatedText(colorCtx, px, pz, 0, label, this.mmToPx(0.55), textColor);
       });
     } else {
-      // BOTTOM Face Silkscreen
-      // 1. "BOTTOM FRONT" indicator
+      // BOTTOM Face Silkscreen (Verified from bottom photos)
+      // 1. "▲ FRONT" indicator
       const [bfx, bfz] = this.toPx(0, -17.0);
       this.drawRotatedText(colorCtx, bfx, bfz, 0, '▲ FRONT', this.mmToPx(0.9), textColor);
       this.drawRotatedText(roughnessCtx, bfx, bfz, 0, '▲ FRONT', this.mmToPx(0.9), textRoughness);
 
-      // 2. BETAFPV Branding
+      // 2. BETAFPV Logo Text on left wing
       const [mx, mz] = this.toPx(-9.5, -12.5);
       this.drawRotatedText(colorCtx, mx, mz, -Math.PI / 4, 'Matrix 5IN1', this.mmToPx(0.85), textColor);
       this.drawRotatedText(roughnessCtx, mx, mz, -Math.PI / 4, 'Matrix 5IN1', this.mmToPx(0.85), textRoughness);
@@ -1108,7 +1177,7 @@ export class ProceduralPCBGenerator {
   }
 
   // =========================================================================
-  // Layer 7: Illustrative Educational Schematic Overlay (Optional)
+  // Layer 6: Illustrative Educational Schematic Overlay (Optional)
   // =========================================================================
 
   private static drawIllustrativeSchematicOverlay(
@@ -1125,7 +1194,7 @@ export class ProceduralPCBGenerator {
     colorCtx.fillText('⚠️ 教學示意線路 (Illustrative Schematic Overlay · Not Actual PCB Traces)', wx, wz);
 
     if (side === 'top') {
-      // 1. Power Distribution Rail (Amber dashed path from Battery -> Current Sensor -> BEC)
+      // 1. Power Distribution Rail (Amber dashed path from Battery -> Current Sensor -> MCU)
       const p1 = this.toPx(-12.27, 2.31); // BATT+
       const p2 = this.toPx(-10.8, -2.17); // Shunt
       const p3 = this.toPx(-9.1, 0.55); // CS Amp
@@ -1190,13 +1259,89 @@ export class ProceduralPCBGenerator {
   // Canvas Geometry Helpers
   // =========================================================================
 
+  private static drawGoldPad(
+    cx: number, cz: number, w: number, h: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    this.drawRotatedRect(colorCtx, cx, cz, w, h, rot, '#dfb136');
+    this.drawRotatedRect(roughnessCtx, cx, cz, w, h, rot, '#373737'); // 0.22 metallic
+    this.drawRotatedRect(metalnessCtx, cx, cz, w, h, rot, '#f5f5f5'); // 0.96 metal
+    this.drawRotatedRect(bumpCtx, cx, cz, w, h, rot, '#b4b4b4'); // +0.035 mm copper relief
+  }
+
+  private static drawPerimeterPads(
+    cx: number, cz: number,
+    countX: number, countZ: number,
+    pitchX: number, pitchZ: number,
+    distX: number, distZ: number,
+    leadLen: number, leadWid: number,
+    rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    metalnessCtx: CanvasRenderingContext2D, bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+
+    // North & South edges
+    for (let i = 0; i < countX; i++) {
+      const lx = (i - (countX - 1) / 2) * pitchX;
+      // North
+      const pxN = cx + lx * cos - (-distZ) * sin;
+      const pzN = cz + lx * sin + (-distZ) * cos;
+      this.drawGoldPad(pxN, pzN, leadWid, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+      // South
+      const pxS = cx + lx * cos - distZ * sin;
+      const pzS = cz + lx * sin + distZ * cos;
+      this.drawGoldPad(pxS, pzS, leadWid, leadLen, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    }
+
+    // West & East edges
+    for (let i = 0; i < countZ; i++) {
+      const lz = (i - (countZ - 1) / 2) * pitchZ;
+      // West
+      const pxW = cx + (-distX) * cos - lz * sin;
+      const pzW = cz + (-distX) * sin + lz * cos;
+      this.drawGoldPad(pxW, pzW, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+      // East
+      const pxE = cx + distX * cos - lz * sin;
+      const pzE = cz + distX * sin + lz * cos;
+      this.drawGoldPad(pxE, pzE, leadLen, leadWid, rot, colorCtx, roughnessCtx, metalnessCtx, bumpCtx);
+    }
+  }
+
+  private static drawPin1Dot(
+    cx: number, cz: number, wPx: number, dPx: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
+    bumpCtx: CanvasRenderingContext2D,
+  ) {
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+    const p1DistX = -wPx / 2 - this.mmToPx(0.45);
+    const p1DistZ = -dPx / 2 - this.mmToPx(0.45);
+    const p1x = cx + p1DistX * cos - p1DistZ * sin;
+    const p1z = cz + p1DistX * sin + p1DistZ * cos;
+    const dotR = this.mmToPx(0.18);
+
+    colorCtx.beginPath();
+    colorCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
+    colorCtx.fillStyle = '#f3f6fa';
+    colorCtx.fill();
+
+    roughnessCtx.beginPath();
+    roughnessCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
+    roughnessCtx.fillStyle = '#e0e0e0';
+    roughnessCtx.fill();
+
+    bumpCtx.beginPath();
+    bumpCtx.arc(p1x, p1z, dotR, 0, Math.PI * 2);
+    bumpCtx.fillStyle = '#9b9b9b';
+    bumpCtx.fill();
+  }
+
   private static drawRotatedRect(
     ctx: CanvasRenderingContext2D,
-    cx: number,
-    cz: number,
-    w: number,
-    h: number,
-    rot: number,
+    cx: number, cz: number, w: number, h: number, rot: number,
     fill: string,
   ) {
     ctx.save();
@@ -1209,13 +1354,8 @@ export class ProceduralPCBGenerator {
 
   private static drawRotatedRectOutline(
     ctx: CanvasRenderingContext2D,
-    cx: number,
-    cz: number,
-    w: number,
-    h: number,
-    rot: number,
-    stroke: string,
-    lineWidth: number,
+    cx: number, cz: number, w: number, h: number, rot: number,
+    stroke: string, lineWidth: number,
   ) {
     ctx.save();
     ctx.translate(cx, cz);
@@ -1228,12 +1368,8 @@ export class ProceduralPCBGenerator {
 
   private static drawRotatedText(
     ctx: CanvasRenderingContext2D,
-    cx: number,
-    cz: number,
-    rot: number,
-    text: string,
-    sizePx: number,
-    fill: string,
+    cx: number, cz: number, rot: number,
+    text: string, sizePx: number, fill: string,
   ) {
     ctx.save();
     ctx.translate(cx, cz);
@@ -1247,13 +1383,8 @@ export class ProceduralPCBGenerator {
   }
 
   private static drawPackageCornerTicks(
-    cx: number,
-    cz: number,
-    w: number,
-    h: number,
-    rot: number,
-    colorCtx: CanvasRenderingContext2D,
-    roughnessCtx: CanvasRenderingContext2D,
+    cx: number, cz: number, w: number, h: number, rot: number,
+    colorCtx: CanvasRenderingContext2D, roughnessCtx: CanvasRenderingContext2D,
     bumpCtx: CanvasRenderingContext2D,
   ) {
     const tickLen = Math.min(w, h) * 0.22;
@@ -1300,9 +1431,7 @@ export class ProceduralPCBGenerator {
     colorCtx: CanvasRenderingContext2D,
     roughnessCtx: CanvasRenderingContext2D,
     bumpCtx: CanvasRenderingContext2D,
-    cx: number,
-    cz: number,
-    size: number,
+    cx: number, cz: number, size: number,
   ) {
     const drawChevron = (ctx: CanvasRenderingContext2D, stroke: string) => {
       ctx.save();
