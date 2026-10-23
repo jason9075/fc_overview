@@ -30,13 +30,13 @@ export class InfoCard {
     return this.currentId;
   }
 
-  showComponent(id: ComponentId) {
+  showComponent(id: ComponentId, subLabel?: string) {
     this.currentId = id;
     const info = componentCatalog[id] || componentCatalog['board'];
-    this.render(info);
+    this.render(info, subLabel);
   }
 
-  private render(info: ComponentInfo) {
+  private render(info: ComponentInfo, subLabel?: string) {
     const isBoardOverview = info.id === 'board';
 
     const statusChipsHtml = info.status
@@ -108,7 +108,7 @@ export class InfoCard {
       <div class="card-header">
         <div class="header-left">
           <span class="card-abbr">${info.abbr}</span>
-          <h2 class="card-title">${info.title}</h2>
+          <h2 class="card-title">${info.title}${subLabel ? `<span class="card-sublabel">（${subLabel}）</span>` : ''}</h2>
         </div>
         ${!isBoardOverview ? '<button class="card-close-btn" id="btn-card-close" title="返回總覽">×</button>' : ''}
       </div>

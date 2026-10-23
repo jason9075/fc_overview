@@ -216,6 +216,13 @@ html, body {
   line-height: 1.35;
 }
 
+.card-sublabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-cyan);
+  margin-left: 4px;
+}
+
 .card-close-btn {
   background: rgba(255, 255, 255, 0.08);
   border: none;

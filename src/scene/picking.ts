@@ -3,8 +3,11 @@ import type { ComponentId } from '../data/components';
 
 export interface PickResult {
   componentId: ComponentId | null;
+  placementKey: string | null;
+  side: 'top' | 'bottom' | null;
   mesh: THREE.Mesh | null;
   point: THREE.Vector3 | null;
+  worldPosition: THREE.Vector3 | null;
   subLabel?: string;
 }
 
@@ -37,7 +40,14 @@ export class Picker {
 
     const intersects = this.raycaster.intersectObjects(candidates, false);
     if (intersects.length === 0) {
-      return { componentId: null, mesh: null, point: null };
+      return {
+        componentId: null,
+        placementKey: null,
+        side: null,
+        mesh: null,
+        point: null,
+        worldPosition: null,
+      };
     }
 
     // Find the distance of the nearest solid PCB obstruction
@@ -59,25 +69,42 @@ export class Picker {
       const compId = this.findComponentId(hit.object);
       if (compId) {
         let subLabel: string | undefined = hit.object.userData.subLabel;
-        if (!subLabel) {
-          for (let p: THREE.Object3D | null = hit.object.parent; p; p = p.parent) {
-            if (p.userData.subLabel) {
-              subLabel = p.userData.subLabel;
-              break;
-            }
-          }
+        let placementKey: string | null = hit.object.userData.placementKey || null;
+        let side: 'top' | 'bottom' | null = hit.object.userData.side || null;
+
+        for (let p: THREE.Object3D | null = hit.object; p; p = p.parent) {
+          if (!subLabel && p.userData.subLabel) subLabel = p.userData.subLabel;
+          if (!placementKey && p.userData.placementKey) placementKey = p.userData.placementKey;
+          if (!side && p.userData.side) side = p.userData.side;
         }
+
+        if (!side) {
+          side = hit.point.y < 0 ? 'bottom' : 'top';
+        }
+
+        const worldPos = new THREE.Vector3();
+        hit.object.getWorldPosition(worldPos);
 
         return {
           componentId: compId,
+          placementKey,
+          side,
           mesh: hit.object as THREE.Mesh,
           point: hit.point,
+          worldPosition: worldPos,
           subLabel,
         };
       }
     }
 
-    return { componentId: null, mesh: null, point: null };
+    return {
+      componentId: null,
+      placementKey: null,
+      side: null,
+      mesh: null,
+      point: null,
+      worldPosition: null,
+    };
   }
 
   private findComponentId(obj: THREE.Object3D | null): ComponentId | null {

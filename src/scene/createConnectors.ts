@@ -42,6 +42,7 @@ export function createConnectors(materials: MaterialLibrary): THREE.Group {
       node.userData.placementKey = p.key;
       node.userData.partKind = p.kind;
       node.userData.subLabel = p.subLabel;
+      node.userData.side = p.side;
     });
 
     group.add(mesh);

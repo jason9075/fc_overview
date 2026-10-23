@@ -16,10 +16,6 @@ import { ComponentDrawer, AbsentModal } from './ui/glossary';
 import { componentCatalog, type ComponentId } from './data/components';
 import { placements } from './data/placement';
 
-// State
-let selectedId: ComponentId | null = null;
-let hoveredId: ComponentId | null = null;
-
 function checkWebGL(): boolean {
   try {
     const canvas = document.createElement('canvas');
@@ -125,12 +121,31 @@ function init() {
     onOpenGlossary: () => absentModal.show(),
   });
 
-  // Selection & Focus helpers
-  function selectComponent(id: ComponentId | null) {
+  // Selection & Focus state (supporting two levels: Functional Group & Physical Component)
+  interface SelectionDetails {
+    placementKey?: string | null;
+    side?: 'top' | 'bottom' | null;
+    worldPosition?: THREE.Vector3 | null;
+    subLabel?: string;
+  }
+
+  let selectedId: ComponentId | null = null;
+  let hoveredId: ComponentId | null = null;
+  let selectedPlacementKey: string | null = null;
+  let selectedSide: 'top' | 'bottom' | null = null;
+  let selectedWorldPos: THREE.Vector3 | null = null;
+  let selectedSubLabel: string | undefined = undefined;
+
+  function selectComponent(id: ComponentId | null, details?: SelectionDetails) {
     selectedId = id;
-    highlight.setSelected(id);
+    selectedPlacementKey = details?.placementKey || null;
+    selectedSide = details?.side || null;
+    selectedWorldPos = details?.worldPosition || null;
+    selectedSubLabel = details?.subLabel;
+
+    highlight.setSelected(id, selectedPlacementKey);
     forwardArrow.setPulse(id === 'forward');
-    infoCard.showComponent(id || 'board');
+    infoCard.showComponent(id || 'board', selectedSubLabel);
     drawer.setSelected(id);
   }
 
@@ -139,11 +154,39 @@ function init() {
       camManager.focusPart(new THREE.Vector3(0, 0, -18.5), 'annotation');
       return;
     }
+
+    // 1. If we clicked a specific physical component and have its actual worldPosition & side:
+    if (selectedId === id && selectedWorldPos && selectedSide) {
+      camManager.focusPart(selectedWorldPos, selectedSide);
+      return;
+    }
+
+    // 2. If a specific placementKey was recorded, locate that specific part
+    if (selectedPlacementKey) {
+      const p = placements.find((item) => item.key === selectedPlacementKey);
+      const targetPos = highlight.getComponentWorldPosition(id, selectedPlacementKey);
+      if (targetPos && p) {
+        camManager.focusPart(targetPos, p.side);
+        return;
+      }
+    }
+
+    // 3. Functional Group level focus (e.g. from drawer)
     const targetPos = highlight.getComponentWorldPosition(id);
     if (targetPos) {
-      // Check which side this component is primarily on
-      const placement = placements.find((p) => p.id === id);
-      const side = placement ? placement.side : targetPos.y < 0 ? 'bottom' : 'top';
+      // Find matching placements; for multi-chip groups like ESC or Connectors,
+      // pick placement matching the side of targetPos
+      const matchingPlacements = placements.filter((p) => p.id === id);
+      let side: 'top' | 'bottom' | 'annotation' = targetPos.y < 0 ? 'bottom' : 'top';
+      if (matchingPlacements.length > 0) {
+        // If all placements are on the same side, use that side
+        if (matchingPlacements.every((p) => p.side === matchingPlacements[0].side)) {
+          side = matchingPlacements[0].side;
+        } else {
+          // Mixed side (like ESC): determine side from targetPos.y
+          side = targetPos.y < 0 ? 'bottom' : 'top';
+        }
+      }
       camManager.focusPart(targetPos, side);
     } else {
       camManager.viewReset();
@@ -210,11 +253,17 @@ function init() {
       const hit = picker.pick(nx, ny);
 
       if (hit.componentId && hit.componentId !== 'board') {
-        if (selectedId === hit.componentId) {
+        if (selectedId === hit.componentId && selectedPlacementKey === hit.placementKey) {
           // Clicking already selected component toggles off
           selectComponent(null);
         } else {
-          selectComponent(hit.componentId);
+          selectComponent(hit.componentId, {
+            placementKey: hit.placementKey,
+            side: hit.side,
+            worldPosition: hit.worldPosition,
+            subLabel: hit.subLabel,
+          });
+          focusComponent(hit.componentId);
         }
       } else {
         // Click on background or empty PCB clears component selection / returns to overview
