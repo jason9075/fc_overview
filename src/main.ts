@@ -173,9 +173,9 @@ function init() {
       }
     }
 
-    // Raycast hover only when not dragging
+    // Raycast hover only when not dragging (ignore generic PCB board body for hover tooltip)
     const hit = picker.pick(nx, ny);
-    if (hit.componentId) {
+    if (hit.componentId && hit.componentId !== 'board') {
       hoveredId = hit.componentId;
       dom.style.cursor = 'pointer';
 
@@ -205,10 +205,10 @@ function init() {
       const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
       const hit = picker.pick(nx, ny);
 
-      if (hit.componentId) {
+      if (hit.componentId && hit.componentId !== 'board') {
         selectComponent(hit.componentId);
       } else {
-        // Click on background clears selection
+        // Click on background or empty PCB clears component selection / returns to overview
         selectComponent(null);
       }
     }
