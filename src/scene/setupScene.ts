@@ -13,12 +13,7 @@ export interface SceneContext {
  */
 export function setupScene(container: HTMLElement): SceneContext {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0c1117);
-
-  // Subtle coordinate grid on floor for spatial orientation
-  const gridHelper = new THREE.GridHelper(120, 24, 0x1f2e3d, 0x141e28);
-  gridHelper.position.y = -12;
-  scene.add(gridHelper);
+  scene.background = new THREE.Color(0xf1f5f9);
 
   // Camera: initial view angled toward front face
   const width = container.clientWidth || window.innerWidth;
@@ -36,26 +31,26 @@ export function setupScene(container: HTMLElement): SceneContext {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.08;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   container.appendChild(renderer.domElement);
 
-  // Lighting setup
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+  // Lighting setup for bright studio environment
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
   scene.add(ambientLight);
 
-  const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x1a202c, 0.6);
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 0.7);
   scene.add(hemiLight);
 
   // Top Key Light
-  const dirLight1 = new THREE.DirectionalLight(0xfffaed, 1.4);
+  const dirLight1 = new THREE.DirectionalLight(0xfffaed, 1.3);
   dirLight1.position.set(25, 45, 30);
   scene.add(dirLight1);
 
   // Top Rim Light
-  const dirLight2 = new THREE.DirectionalLight(0x90c5ff, 0.8);
+  const dirLight2 = new THREE.DirectionalLight(0x90c5ff, 0.7);
   dirLight2.position.set(-30, 35, -25);
   scene.add(dirLight2);
 
